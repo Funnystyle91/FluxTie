@@ -48,7 +48,9 @@ class PhotoViewViewModel :
                     originUrl = it.img.original.originalSrc,
                     url = if (it.showOriginalBtn) it.img.original.bigCdnSrc else null,
                     overallIndex = it.overAllIndex.toInt(),
-                    postId = it.postId?.toLongOrNull()
+                    postId = it.postId?.toLongOrNull(),
+                    width = it.img.original.width?.toIntOrNull() ?: 0,
+                    height = it.img.original.height?.toIntOrNull() ?: 0,
                 )
             }
 
@@ -113,7 +115,9 @@ class PhotoViewViewModel :
                                 originUrl = item.originUrl,
                                 url = if (item.showOriginBtn) item.url else null,
                                 overallIndex = index + 1,
-                                postId = item.postId
+                                postId = item.postId,
+                                width = item.width,
+                                height = item.height,
                             )
                         },
                         hasNext = false,
@@ -149,7 +153,9 @@ class PhotoViewViewModel :
                                     originUrl = item.originUrl,
                                     url = if (item.showOriginBtn) item.url else null,
                                     overallIndex = firstItemIndex - (data.data.picIndex - 1 - index),
-                                    postId = item.postId
+                                    postId = item.postId,
+                                    width = item.width,
+                                    height = item.height,
                                 )
                             }
                         val items = localItems + fetchedItems
@@ -213,7 +219,9 @@ sealed interface PhotoViewPartialChange : PartialChange<PhotoViewUiState> {
                                 picId = item.picId,
                                 originUrl = item.originUrl,
                                 url = if (item.showOriginBtn) item.url else null,
-                                overallIndex = index + 1
+                                overallIndex = index + 1,
+                                width = item.width,
+                                height = item.height,
                             )
                         }.toImmutableList(),
                         hasNext = false,
@@ -318,4 +326,6 @@ data class PhotoViewItem(
     val url: String?,
     val overallIndex: Int,
     val postId: Long? = null,
+    val width: Int = 0,
+    val height: Int = 0,
 )

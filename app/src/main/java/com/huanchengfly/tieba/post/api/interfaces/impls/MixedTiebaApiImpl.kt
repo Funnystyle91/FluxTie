@@ -31,8 +31,10 @@ import com.huanchengfly.tieba.post.api.models.InitNickNameBean
 import com.huanchengfly.tieba.post.api.models.LikeForumResultBean
 import com.huanchengfly.tieba.post.api.models.LoginBean
 import com.huanchengfly.tieba.post.api.models.MSignBean
+import com.huanchengfly.tieba.post.api.models.MemeResponse
 import com.huanchengfly.tieba.post.api.models.MessageListBean
 import com.huanchengfly.tieba.post.api.models.MsgBean
+import com.huanchengfly.tieba.post.api.models.Pic2IdResponse
 import com.huanchengfly.tieba.post.api.models.NewCollectDataBean
 import com.huanchengfly.tieba.post.api.models.PermissionListBean
 import com.huanchengfly.tieba.post.api.models.PersonalizedBean
@@ -1744,4 +1746,45 @@ object MixedTiebaApiImpl : ITiebaApi {
                 )
             )
         )
+
+    override fun getAllMemeFlow(): Flow<MemeResponse> =
+        RetrofitTiebaApi.OFFICIAL_MEME_API.getAllMemeFlow(cmd = "1003351")
+
+    override fun pic2IdFlow(picUrls: List<String>): Flow<Pic2IdResponse> =
+        RetrofitTiebaApi.OFFICIAL_MEME_API.pic2IdFlow(
+            cmd = "1003353",
+            picUrls = picUrls.joinToString(prefix = "[", postfix = "]", separator = ",") {
+                "\"$it\""
+            }
+        )
+
+    override fun collectMemeFlow(
+        picIds: List<String>,
+        picUpdateTime: Long
+    ): Flow<MemeResponse> =
+        RetrofitTiebaApi.OFFICIAL_MEME_API.collectFlow(
+            cmd = "1003339",
+            pics = buildMemePicsParam(picIds),
+            picUpdateTime = picUpdateTime
+        )
+
+    override fun collectDiyMemeFlow(
+        picIds: List<String>,
+        diyPicUpdateTime: Long
+    ): Flow<MemeResponse> =
+        RetrofitTiebaApi.OFFICIAL_MEME_API.collectDiyFlow(
+            cmd = "1003532",
+            pics = buildMemePicsParam(picIds),
+            isDiy = 1,
+            diyPicUpdateTime = diyPicUpdateTime
+        )
+
+    private fun buildMemePicsParam(picIds: List<String>): String =
+        if (picIds.isEmpty()) {
+            "all_delete"
+        } else {
+            picIds.joinToString(prefix = "[", postfix = "]", separator = ",") {
+                """{"pic_id":"$it"}"""
+            }
+        }
 }

@@ -7,6 +7,7 @@ import com.huanchengfly.tieba.post.models.database.Account
 import com.huanchengfly.tieba.post.models.database.Block
 import com.huanchengfly.tieba.post.models.database.Draft
 import com.huanchengfly.tieba.post.models.database.History
+import com.huanchengfly.tieba.post.models.database.MemeEmoticon
 import com.huanchengfly.tieba.post.models.database.SearchHistory
 import com.huanchengfly.tieba.post.models.database.SearchPostHistory
 import com.huanchengfly.tieba.post.models.database.TopForum
@@ -101,4 +102,26 @@ object DatabaseUtil {
     suspend fun deleteSearchPostHistory(id: Long) = appDatabase.searchPostHistoryDao().deleteById(id)
 
     suspend fun clearSearchPostHistory() = appDatabase.searchPostHistoryDao().deleteAll()
+
+    // ── MemeEmoticon ────────────────────────────────────────────
+    fun getMemeEmoticonFlow(uid: String): Flow<List<MemeEmoticon>> =
+        appDatabase.memeEmoticonDao().getFlowByUid(uid)
+
+    suspend fun getMemeEmoticons(uid: String): List<MemeEmoticon> =
+        appDatabase.memeEmoticonDao().getByUid(uid)
+
+    suspend fun getMemeEmoticons(uid: String, type: Int): List<MemeEmoticon> =
+        appDatabase.memeEmoticonDao().getByUidAndType(uid, type)
+
+    suspend fun upsertMemeEmoticon(item: MemeEmoticon) =
+        appDatabase.memeEmoticonDao().insert(item)
+
+    suspend fun upsertMemeEmoticons(items: List<MemeEmoticon>) =
+        appDatabase.memeEmoticonDao().insertAll(items)
+
+    suspend fun deleteMemeEmoticon(uid: String, picId: String, type: Int) =
+        appDatabase.memeEmoticonDao().delete(uid, picId, type)
+
+    suspend fun replaceMemeEmoticons(uid: String, items: List<MemeEmoticon>) =
+        appDatabase.memeEmoticonDao().replaceAll(uid, items)
 }

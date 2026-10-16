@@ -11,6 +11,11 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
+private val MIGRATION_40_41 = Migration(40, 41) { db ->
+    db.execSQL("CREATE TABLE IF NOT EXISTS `meme_emoticon` (`id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, `uid` TEXT NOT NULL, `picId` TEXT NOT NULL, `pkgId` TEXT NOT NULL, `picUrl` TEXT NOT NULL, `thumbnail` TEXT, `width` INTEGER NOT NULL, `height` INTEGER NOT NULL, `type` INTEGER NOT NULL, `orderId` INTEGER NOT NULL, `addedTime` INTEGER NOT NULL)")
+    db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_meme_emoticon_uid_picId_pkgId_type` ON `meme_emoticon` (`uid`, `picId`, `pkgId`, `type`)")
+}
+
 private val MIGRATION_39_40 = Migration(39, 40) { db ->
     db.execSQL("CREATE TABLE IF NOT EXISTS `draft_new` (`id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, `hash` TEXT NOT NULL, `content` TEXT NOT NULL)")
     db.execSQL("INSERT OR REPLACE INTO `draft_new` (`id`, `hash`, `content`) SELECT `id`, `hash`, `content` FROM `draft` WHERE `id` IN (SELECT MAX(`id`) FROM `draft` GROUP BY `hash`)")
@@ -70,7 +75,7 @@ object DatabaseModule {
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
         return Room.databaseBuilder(context, AppDatabase::class.java, "tblite.db")
-            .addMigrations(MIGRATION_38_39, MIGRATION_39_40)
+            .addMigrations(MIGRATION_38_39, MIGRATION_39_40, MIGRATION_40_41)
             .build()
     }
 
@@ -94,4 +99,7 @@ object DatabaseModule {
 
     @Provides
     fun provideSearchPostHistoryDao(db: AppDatabase) = db.searchPostHistoryDao()
+
+    @Provides
+    fun provideMemeEmoticonDao(db: AppDatabase) = db.memeEmoticonDao()
 }

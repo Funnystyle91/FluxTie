@@ -153,8 +153,12 @@ fun EmoticonText(
         remember(sizePx) { (sizePx + lineSpacing.value.spToPxFloat()).pxToSpFloat().sp }
     val emoticonInlineContent =
         remember(sizePx) { EmoticonManager.getEmoticonInlineContent(sizePx * emoticonSize) }
+    val emoticonText = remember(text) { text.emoticonString }
+    val memeInlineContent = remember(emoticonText, sizePx, EmoticonManager.memeVersion) {
+        EmoticonManager.buildMemeInlineContent(emoticonText, sizePx * emoticonSize)
+    }
     IconText(
-        text.emoticonString,
+        emoticonText,
         modifier,
         color,
         fontSize,
@@ -169,7 +173,7 @@ fun EmoticonText(
         softWrap,
         maxLines,
         minLines,
-        emoticonInlineContent + inlineContent,
+        emoticonInlineContent + memeInlineContent + inlineContent,
         onTextLayout,
         style
     )

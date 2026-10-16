@@ -17,7 +17,9 @@ fun getPhotoViewData(
     originUrl: String,
     showOriginBtn: Boolean,
     originSize: Int,
-    seeLz: Boolean = false
+    seeLz: Boolean = false,
+    width: Int = 0,
+    height: Int = 0,
 ): PhotoViewData? {
     if (post.from_forum == null) return null
     return PhotoViewData(
@@ -40,7 +42,9 @@ fun getPhotoViewData(
                 originUrl = originUrl,
                 showOriginBtn = showOriginBtn,
                 originSize = originSize,
-                postId = post.id
+                postId = post.id,
+                width = width,
+                height = height,
             )
         )
     )
@@ -87,7 +91,9 @@ fun getPhotoViewData(
                 originUrl = mediaItem.originPic,
                 showOriginBtn = mediaItem.showOriginalBtn == 1,
                 originSize = mediaItem.originSize,
-                postId = mediaItem.postId
+                postId = mediaItem.postId,
+                width = mediaItem.width,
+                height = mediaItem.height,
             )
         }.toImmutableList(),
         index = index

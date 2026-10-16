@@ -26,6 +26,7 @@ import com.huanchengfly.tieba.post.api.retrofit.interceptors.StParamInterceptor
 import com.huanchengfly.tieba.post.api.retrofit.interfaces.AppHybridTiebaApi
 import com.huanchengfly.tieba.post.api.retrofit.interfaces.MiniTiebaApi
 import com.huanchengfly.tieba.post.api.retrofit.interfaces.NewTiebaApi
+import com.huanchengfly.tieba.post.api.retrofit.interfaces.OfficialMemeApi
 import com.huanchengfly.tieba.post.api.retrofit.interfaces.OfficialProtobufTiebaApi
 import com.huanchengfly.tieba.post.api.retrofit.interfaces.OfficialTiebaApi
 import com.huanchengfly.tieba.post.api.retrofit.interfaces.SofireApi
@@ -360,6 +361,41 @@ object RetrofitTiebaApi {
                 Param.START_TYPE to { "1" },
                 Param.STOKEN to { AccountUtil.getSToken() },
                 Param.Z_ID to { AccountUtil.getAccountInfo { zid }.orEmpty() },
+            ),
+            stParamInterceptor,
+        )
+    }
+
+    val OFFICIAL_MEME_API: OfficialMemeApi by lazy {
+        createJsonApi<OfficialMemeApi>(
+            "https://tiebac.baidu.com/",
+            CommonHeaderInterceptor(
+                Header.CHARSET to { "UTF-8" },
+                Header.CLIENT_TYPE to { "2" },
+                Header.CLIENT_LOG_ID to { "$initTime" },
+                Header.CLIENT_USER_TOKEN to { AccountUtil.getUid() },
+                Header.COOKIE to {
+                    getCookie(
+                        "ka" to { "open" },
+                        "CUID" to { CuidUtils.getNewCuid() },
+                        "TBBRAND" to { Build.MODEL }
+                    )
+                },
+                Header.CUID to { CuidUtils.getNewCuid() },
+                Header.CUID_GALAXY2 to { CuidUtils.getNewCuid() },
+                Header.CUID_GID to { "" },
+                Header.CUID_GALAXY3 to { UIDUtil.getAid() },
+                Header.USER_AGENT to { getUserAgent("tieba/${ClientVersion.TIEBA_V12.version}") },
+            ),
+            defaultCommonParamInterceptor + CommonParamInterceptor(
+                Param.CUID to { CuidUtils.getNewCuid() },
+                Param.CUID_GALAXY2 to { CuidUtils.getNewCuid() },
+                Param.CUID_GID to { "" },
+                Param.CUID_GALAXY3 to { UIDUtil.getAid() },
+                Param.FROM to { "tieba" },
+                Param.CLIENT_VERSION to { ClientVersion.TIEBA_V12.version },
+                Param.STOKEN to { AccountUtil.getSToken() },
+                Param.OAID to { OAID().toJson() },
             ),
             stParamInterceptor,
         )

@@ -640,4 +640,18 @@
     <string name="title_update_notification_done">更新下载完成</string>
     <string name="tip_update_notification_progress">正在下载 %1$d%%</string>
     <string name="tip_update_notification_done">点击安装</string>
+    <!-- 表情包 -->
+    <string name="title_meme_emoticon">表情包管理</string>
+    <string name="summary_meme_emoticon">管理收藏与 DIY 表情，与云端同步</string>
+    <string name="title_meme_classic">经典</string>
+    <string name="title_meme_collect">收藏</string>
+    <string name="title_meme_diy">DIY</string>
+    <string name="title_delete_meme">删除表情</string>
+    <string name="tip_delete_meme">确定要删除这个表情吗？删除后会同步到云端。</string>
+    <string name="tip_login_first">请先登录</string>
+    <string name="desc_sync">同步</string>
+    <string name="title_add_to_meme">添加到表情</string>
+    <string name="tip_meme_empty">还没有表情，可在图片浏览页添加</string>
+    <string name="toast_add_meme_success">已添加到表情包</string>
+    <string name="toast_add_meme_failed">添加失败：%s</string>
 </resources>

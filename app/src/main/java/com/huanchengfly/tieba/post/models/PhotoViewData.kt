@@ -26,6 +26,8 @@ data class PicItem(
     val showOriginBtn: Boolean,
     val originSize: Int,
     val postId: Long? = null,
+    val width: Int = 0,
+    val height: Int = 0,
 ) : Parcelable
 
 @Immutable

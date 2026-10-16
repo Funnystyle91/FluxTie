@@ -9,7 +9,10 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
@@ -32,8 +35,10 @@ import com.huanchengfly.tieba.post.App
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.fromJson
 import com.huanchengfly.tieba.post.models.EmoticonCache
+import com.huanchengfly.tieba.post.models.database.MemeEmoticon
 import com.huanchengfly.tieba.post.pxToDp
 import com.huanchengfly.tieba.post.pxToSp
+import com.huanchengfly.tieba.post.repository.MemeRepository
 import com.huanchengfly.tieba.post.toJson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -126,6 +131,77 @@ object EmoticonManager {
     private val drawableCache: MutableMap<String, Drawable> = mutableMapOf()
     private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
+    /** 个人表情包内存映射：sharpKey（collect_xxx / diy_xxx）→ 图片 URL */
+    private val memeEmoticonMap: MutableMap<String, String> = mutableMapOf()
+
+    /** 表情包数据版本号，供 Compose 感知 [memeEmoticonMap] 更新 */
+    var memeVersion by mutableStateOf(0)
+        private set
+
+    /** 更新个人表情包内存映射（同步 / 增删后调用） */
+    fun updateMemeEmoticons(list: List<MemeEmoticon>) {
+        memeEmoticonMap.clear()
+        list.forEach { m ->
+            val url = m.thumbnail?.takeIf { it.isNotEmpty() } ?: m.picUrl
+            if (url.isNotEmpty()) {
+                memeEmoticonMap[MemeRepository.sharpKeyOf(m)] = url
+            }
+        }
+        memeVersion++
+    }
+
+    /** 按 sharpKey 获取个人表情图片 URL */
+    fun getMemeUrl(key: String): String? = memeEmoticonMap[key]
+
+    /**
+     * 将文本中的表情标识归一化为本地映射 key。
+     *
+     * 服务端下发的文本可能不带 `collect_`/`diy_` 前缀（发送时被去除），
+     * 此时依次尝试收藏 / DIY 映射；均无对应表情时返回 null（不渲染）。
+     */
+    fun resolveMemeKey(rawKey: String): String? {
+        if (rawKey.startsWith("collect_") || rawKey.startsWith("diy_")) {
+            return rawKey.takeIf { memeEmoticonMap.containsKey(it) }
+        }
+        return ("collect_$rawKey").takeIf { memeEmoticonMap.containsKey(it) }
+            ?: ("diy_$rawKey").takeIf { memeEmoticonMap.containsKey(it) }
+    }
+
+    /**
+     * 为文本中出现的个人表情（`MemeEmoticon#key` 注解）构建 InlineContent。
+     * 仅构建文本中实际出现且本地有 URL 的表情，避免全量构建。
+     */
+    fun buildMemeInlineContent(
+        text: AnnotatedString,
+        sizePx: Float
+    ): Map<String, InlineTextContent> {
+        val keys = text.getStringAnnotations(EmoticonUtil.INLINE_CONTENT_TAG, 0, text.length)
+            .mapNotNull { annotation ->
+                annotation.item
+                    .takeIf { it.startsWith(EmoticonUtil.MEME_INLINE_PREFIX) }
+                    ?.removePrefix(EmoticonUtil.MEME_INLINE_PREFIX)
+            }
+            .distinct()
+            .filter { memeEmoticonMap.containsKey(it) }
+        if (keys.isEmpty()) return emptyMap()
+        return keys.associate { key ->
+            "${EmoticonUtil.MEME_INLINE_PREFIX}$key" to InlineTextContent(
+                placeholder = Placeholder(
+                    sizePx.pxToSp().sp,
+                    sizePx.pxToSp().sp,
+                    PlaceholderVerticalAlign.TextCenter
+                ),
+                children = {
+                    AsyncImage(
+                        imageUri = memeEmoticonMap[key].orEmpty(),
+                        contentDescription = stringResource(id = R.string.emoticon, key),
+                        modifier = Modifier.size(sizePx.pxToDp().dp)
+                    )
+                }
+            )
+        }
+    }
+
     fun getEmoticonInlineContent(
         sizePx: Float
     ): Map<String, InlineTextContent> {
@@ -175,6 +251,7 @@ object EmoticonManager {
         coroutineScope.launch {
             withContext(Dispatchers.IO) {
                 runCatching { fetchEmoticons(context) }
+                runCatching { MemeRepository.ensureLoaded() }
             }
         }
     }

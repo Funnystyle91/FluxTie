@@ -23,6 +23,7 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.EmojiEmotions
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.runtime.Composable
@@ -43,20 +44,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import com.github.panpf.sketch.compose.rememberAsyncImageState
 import com.github.panpf.sketch.request.LoadState
 import com.github.panpf.zoomimage.SketchZoomAsyncImage
 import com.stoyanvuchev.systemuibarstweaker.SystemUIBarsTweaker
 import com.huanchengfly.tieba.post.R
+import com.huanchengfly.tieba.post.api.retrofit.exception.getErrorMessage
 import com.huanchengfly.tieba.post.arch.BaseComposeActivityWithParcelable
 import com.huanchengfly.tieba.post.models.PhotoViewData
+import com.huanchengfly.tieba.post.repository.MemeRepository
 import com.huanchengfly.tieba.post.toastShort
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.widgets.compose.LazyLoad
 import com.huanchengfly.tieba.post.ui.widgets.compose.ProvideContentColor
+import com.huanchengfly.tieba.post.utils.AccountUtil
 import com.huanchengfly.tieba.post.utils.ImageUtil
 import com.huanchengfly.tieba.post.utils.download
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @Composable
@@ -235,6 +241,37 @@ class PhotoViewActivity : BaseComposeActivityWithParcelable<PhotoViewData>() {
                                     )
                                 } else {
                                     Spacer(modifier = Modifier.weight(1f))
+                                }
+                                IconButton(onClick = {
+                                    val uid = AccountUtil.getUid()
+                                    if (uid == null) {
+                                        toastShort(R.string.tip_login_first)
+                                    } else {
+                                        val item = items[index]
+                                        lifecycleScope.launch {
+                                            MemeRepository.addMeme(
+                                                uid = uid,
+                                                picUrl = item.originUrl,
+                                                thumbnail = null,
+                                                width = item.width,
+                                                height = item.height,
+                                            ).onSuccess {
+                                                toastShort(R.string.toast_add_meme_success)
+                                            }.onFailure {
+                                                toastShort(
+                                                    getString(
+                                                        R.string.toast_add_meme_failed,
+                                                        it.getErrorMessage()
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    }
+                                }) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.EmojiEmotions,
+                                        contentDescription = stringResource(id = R.string.title_add_to_meme)
+                                    )
                                 }
                                 IconButton(onClick = {
                                     toastShort(R.string.toast_preparing_share_pic)

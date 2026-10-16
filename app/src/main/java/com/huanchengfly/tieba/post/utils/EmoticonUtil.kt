@@ -18,11 +18,23 @@ object EmoticonUtil {
     const val EMOTICON_EMOJI_WEB_TYPE = 5
     const val INLINE_CONTENT_TAG = "androidx.compose.foundation.text.inlineContent"
 
+    /** 个人表情（贴吧表情包）InlineContent 键前缀，完整键为 `MemeEmoticon#{sharpKey}` */
+    const val MEME_INLINE_PREFIX = "MemeEmoticon#"
+
     @RegExp
     private val REGEX_WEB = "\\(#(([\u4e00-\u9fa5\\w\u007e])+)\\)"
 
     @RegExp
     private val REGEX = "#\\((([一-龥\\w~])+)\\)"
+
+    /**
+     * 个人表情文本：
+     * - 本地 sharpText：`#(meme,collect_xxx,150,150,md5)` / `#(meme,diy_xxx,...)`
+     * - 服务端下发（发送时前缀被去除）：`#(meme,xxx,150,150,md5)` / `#(meme,{pkgId}_xxx,...)`
+     * 排除表情包表情（net_ 前缀）
+     */
+    @RegExp
+    internal val REGEX_MEME = "#\\(meme,(?!net_)((collect_|diy_)?[a-zA-Z0-9_,]+)\\)"
     private val EMPTY_MAP: Map<String, Int> = emptyMap()
     private val EMOTICON_ALL_WEB_MAP: MutableMap<String, Int> = mutableMapOf()
     private val EMOTICON_CLASSIC_WEB_MAP: MutableMap<String, Int> = mutableMapOf()
@@ -138,6 +150,7 @@ object EmoticonUtil {
                         )
                     }
                 }
+                appendMemeAnnotations(this@emoticonString)
             }
         }
 
@@ -166,6 +179,22 @@ object EmoticonUtil {
                         )
                     }
                 }
+                appendMemeAnnotations(this@emoticonString)
             }
         }
+
+    /** 扫描个人表情文本并添加 InlineContent 注解（与内置 `#(名称)` 表情互斥，独立扫描） */
+    private fun AnnotatedString.Builder.appendMemeAnnotations(text: CharSequence) {
+        val matcher = Pattern.compile(REGEX_MEME).matcher(text)
+        while (matcher.find()) {
+            val rawKey = matcher.group(1)?.substringBefore(',') ?: continue
+            val key = EmoticonManager.resolveMemeKey(rawKey) ?: continue
+            addStringAnnotation(
+                INLINE_CONTENT_TAG,
+                "$MEME_INLINE_PREFIX$key",
+                matcher.start(),
+                matcher.end(),
+            )
+        }
+    }
 }

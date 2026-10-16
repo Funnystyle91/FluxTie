@@ -6,9 +6,11 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.util.Log
 import android.view.View
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,6 +37,8 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -47,6 +51,7 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
+import androidx.compose.material.Tab
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
@@ -67,10 +72,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onVisibilityChanged
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -78,9 +89,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
 import androidx.core.widget.addTextChangedListener
 import com.github.panpf.sketch.compose.AsyncImage
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
@@ -93,7 +111,9 @@ import com.huanchengfly.tieba.post.arch.onEvent
 import com.huanchengfly.tieba.post.arch.onGlobalEvent
 import com.huanchengfly.tieba.post.arch.pageViewModel
 import com.huanchengfly.tieba.post.models.database.Draft
+import com.huanchengfly.tieba.post.models.database.MemeEmoticon
 import com.huanchengfly.tieba.post.pxToDpFloat
+import com.huanchengfly.tieba.post.repository.MemeRepository
 import com.huanchengfly.tieba.post.toMD5
 import com.huanchengfly.tieba.post.toastShort
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
@@ -109,6 +129,8 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.DialogNegativeButton
 import com.huanchengfly.tieba.post.ui.widgets.compose.DialogPositiveButton
 import com.huanchengfly.tieba.post.ui.widgets.compose.DialogState
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyBackHandler
+import com.huanchengfly.tieba.post.ui.widgets.compose.PagerTabIndicator
+import com.huanchengfly.tieba.post.ui.widgets.compose.TabRow
 import com.huanchengfly.tieba.post.ui.widgets.compose.VerticalDivider
 import com.huanchengfly.tieba.post.ui.widgets.compose.rememberDialogState
 import com.huanchengfly.tieba.post.ui.widgets.edittext.widget.UndoableEditText
@@ -129,6 +151,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.sample
@@ -706,6 +729,9 @@ internal fun ReplyPageContent(
                                 .padding(horizontal = 8.dp),
                             onEmoticonClick = { emoticon ->
                                 insertEmoticon("#(${emoticon.name})")
+                            },
+                            onMemeClick = { meme ->
+                                insertEmoticon(MemeRepository.buildSharpText(meme))
                             }
                         )
                     }
@@ -839,45 +865,257 @@ fun ReplyPage(
     )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun EmoticonPanel(
     modifier: Modifier = Modifier,
+    onEmoticonClick: (Emoticon) -> Unit,
+    onMemeClick: (MemeEmoticon) -> Unit,
+) {
+    val uid = remember { AccountUtil.getUid() }
+    val memes by produceState(initialValue = emptyList<MemeEmoticon>(), uid) {
+        if (uid != null) {
+            MemeRepository.memeFlow(uid).collect { value = it }
+        }
+    }
+    val collectList = remember(memes) {
+        memes.filter { it.type == MemeEmoticon.TYPE_COLLECT }
+    }
+    val diyList = remember(memes) {
+        memes.filter { it.type == MemeEmoticon.TYPE_DIY }
+    }
+
+    Column(
+        modifier = modifier.fillMaxHeight()
+    ) {
+        if (uid == null) {
+            ClassicEmoticonGrid(onEmoticonClick = onEmoticonClick)
+        } else {
+            val coroutineScope = rememberCoroutineScope()
+            val pagerState = rememberPagerState { 3 }
+            TabRow(
+                selectedTabIndex = pagerState.currentPage,
+                indicator = { tabPositions ->
+                    PagerTabIndicator(pagerState = pagerState, tabPositions = tabPositions)
+                },
+                divider = {},
+                backgroundColor = Color.Transparent,
+                contentColor = ExtendedTheme.colors.primary,
+            ) {
+                Tab(
+                    selected = pagerState.currentPage == 0,
+                    onClick = { coroutineScope.launch { pagerState.animateScrollToPage(0) } },
+                    selectedContentColor = ExtendedTheme.colors.primary,
+                    unselectedContentColor = ExtendedTheme.colors.textSecondary,
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.title_meme_classic),
+                        fontSize = 13.sp
+                    )
+                }
+                Tab(
+                    selected = pagerState.currentPage == 1,
+                    onClick = { coroutineScope.launch { pagerState.animateScrollToPage(1) } },
+                    selectedContentColor = ExtendedTheme.colors.primary,
+                    unselectedContentColor = ExtendedTheme.colors.textSecondary,
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.title_meme_collect),
+                        fontSize = 13.sp
+                    )
+                }
+                Tab(
+                    selected = pagerState.currentPage == 2,
+                    onClick = { coroutineScope.launch { pagerState.animateScrollToPage(2) } },
+                    selectedContentColor = ExtendedTheme.colors.primary,
+                    unselectedContentColor = ExtendedTheme.colors.textSecondary,
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.title_meme_diy),
+                        fontSize = 13.sp
+                    )
+                }
+            }
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.weight(1f),
+                key = { it },
+            ) { page ->
+                when (page) {
+                    1 -> MemeEmoticonGrid(memes = collectList, onClick = onMemeClick)
+                    2 -> MemeEmoticonGrid(memes = diyList, onClick = onMemeClick)
+                    else -> ClassicEmoticonGrid(onEmoticonClick = onEmoticonClick)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ClassicEmoticonGrid(
     onEmoticonClick: (Emoticon) -> Unit,
 ) {
     val emoticons = remember {
         EmoticonManager.getAllEmoticon()
             .filter { it.name.isNotEmpty() }
     }
-
-    Column(
-        modifier = modifier
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(48.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp)
     ) {
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(48.dp),
+        items(emoticons) { emoticon ->
+            Image(
+                painter = rememberDrawablePainter(
+                    drawable = EmoticonManager.getEmoticonDrawable(
+                        LocalContext.current,
+                        emoticon.id
+                    )
+                ),
+                contentDescription = stringResource(
+                    id = R.string.emoticon,
+                    emoticon.name
+                ),
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .size(48.dp)
+                    .padding(8.dp)
+                    .clickable { onEmoticonClick(emoticon) },
+            )
+        }
+    }
+}
+
+private data class MemePreviewState(
+    val meme: MemeEmoticon,
+    /** 按压点（窗口坐标，px） */
+    val pressPosition: IntOffset,
+)
+
+@Composable
+private fun MemeEmoticonGrid(
+    memes: List<MemeEmoticon>,
+    onClick: (MemeEmoticon) -> Unit,
+) {
+    if (memes.isEmpty()) {
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 16.dp)
+                .padding(top = 32.dp),
+            contentAlignment = Alignment.Center
         ) {
-            items(emoticons) { emoticon ->
-                Image(
-                    painter = rememberDrawablePainter(
-                        drawable = EmoticonManager.getEmoticonDrawable(
-                            LocalContext.current,
-                            emoticon.id
-                        )
-                    ),
-                    contentDescription = stringResource(
-                        id = R.string.emoticon,
-                        emoticon.name
-                    ),
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .padding(8.dp)
-                        .clickable { onEmoticonClick(emoticon) },
-                )
+            Text(
+                text = stringResource(id = R.string.tip_meme_empty),
+                style = MaterialTheme.typography.body2,
+                color = ExtendedTheme.colors.textSecondary
+            )
+        }
+    } else {
+        val hapticFeedback = LocalHapticFeedback.current
+        var preview by remember { mutableStateOf<MemePreviewState?>(null) }
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(48.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp)
+            ) {
+                items(memes, key = { it.id }) { meme ->
+                    var positionInWindow by remember { mutableStateOf(IntOffset.Zero) }
+                    AsyncImage(
+                        imageUri = meme.thumbnail?.takeIf { it.isNotEmpty() } ?: meme.picUrl,
+                        contentDescription = stringResource(id = R.string.emoticon, ""),
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .onGloballyPositioned { coordinates ->
+                                val position = coordinates.positionInWindow()
+                                positionInWindow =
+                                    IntOffset(position.x.toInt(), position.y.toInt())
+                            }
+                            .pointerInput(meme.id) {
+                                detectTapGestures(
+                                    onTap = { onClick(meme) },
+                                    onLongPress = { offset ->
+                                        hapticFeedback.performHapticFeedback(
+                                            HapticFeedbackType.LongPress
+                                        )
+                                        preview = MemePreviewState(
+                                            meme = meme,
+                                            pressPosition = positionInWindow + IntOffset(
+                                                offset.x.toInt(),
+                                                offset.y.toInt()
+                                            )
+                                        )
+                                    },
+                                    onPress = {
+                                        tryAwaitRelease()
+                                        preview = null
+                                    }
+                                )
+                            }
+                            .padding(8.dp),
+                    )
+                }
+            }
+            preview?.let { state ->
+                MemePreviewPopup(state = state, onDismiss = { preview = null })
             }
         }
+    }
+}
+
+@Composable
+private fun MemePreviewPopup(
+    state: MemePreviewState,
+    onDismiss: () -> Unit,
+) {
+    val gapPx = with(LocalDensity.current) { 12.dp.toPx().toInt() }
+    Popup(
+        popupPositionProvider = remember(state.pressPosition, gapPx) {
+            MemePreviewPositionProvider(state.pressPosition, gapPx)
+        },
+        properties = PopupProperties(focusable = false),
+        onDismissRequest = onDismiss,
+    ) {
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = ExtendedTheme.colors.windowBackground,
+            elevation = 8.dp,
+        ) {
+            AsyncImage(
+                imageUri = state.meme.thumbnail?.takeIf { it.isNotEmpty() } ?: state.meme.picUrl,
+                contentDescription = stringResource(id = R.string.emoticon, ""),
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .size(140.dp)
+                    .padding(8.dp),
+            )
+        }
+    }
+}
+
+/**
+ * 预览浮层定位：水平居中对准按压点，垂直置于按压点上方（避免被手指遮挡），
+ * 并按窗口边缘钳制。
+ */
+private class MemePreviewPositionProvider(
+    private val pressPosition: IntOffset,
+    private val verticalGap: Int,
+) : PopupPositionProvider {
+    override fun calculatePosition(
+        anchorBounds: IntRect,
+        windowSize: IntSize,
+        layoutDirection: LayoutDirection,
+        popupContentSize: IntSize,
+    ): IntOffset {
+        val x = (pressPosition.x - popupContentSize.width / 2)
+            .coerceIn(0, (windowSize.width - popupContentSize.width).coerceAtLeast(0))
+        val y = (pressPosition.y - popupContentSize.height - verticalGap)
+            .coerceIn(0, (windowSize.height - popupContentSize.height).coerceAtLeast(0))
+        return IntOffset(x, y)
     }
 }
 

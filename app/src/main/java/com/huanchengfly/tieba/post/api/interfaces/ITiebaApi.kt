@@ -1701,4 +1701,44 @@ interface ITiebaApi {
         threadId: Long,
         option: String,
     ): Flow<AddPollPostReponse>
+
+    /**
+     * 拉取云表情数据（收藏 + DIY，Flow）
+     *
+     * **需登录**
+     */
+    fun getAllMemeFlow(): Flow<MemeResponse>
+
+    /**
+     * 图片 URL 转表情 pic_id（收藏图片为表情前必须先调用，Flow）
+     *
+     * **需登录**
+     *
+     * @param picUrls 图片 URL 列表（原图 URL）
+     */
+    fun pic2IdFlow(picUrls: List<String>): Flow<Pic2IdResponse>
+
+    /**
+     * 上传收藏表情列表（全量覆盖，Flow）
+     *
+     * **需登录**
+     *
+     * @param picIds 收藏的 pic_id 列表（空列表表示清空全部收藏）
+     */
+    fun collectMemeFlow(
+        picIds: List<String>,
+        picUpdateTime: Long = System.currentTimeMillis(),
+    ): Flow<MemeResponse>
+
+    /**
+     * 上传 DIY 表情列表（全量覆盖，Flow）
+     *
+     * **需登录**
+     *
+     * @param picIds DIY 的 pic_id 列表（空列表表示清空全部 DIY 表情）
+     */
+    fun collectDiyMemeFlow(
+        picIds: List<String>,
+        diyPicUpdateTime: Long = System.currentTimeMillis(),
+    ): Flow<MemeResponse>
 }

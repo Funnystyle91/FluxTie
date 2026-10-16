@@ -12,6 +12,7 @@ import androidx.compose.ui.text.withStyle
 import com.huanchengfly.tieba.post.App
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.arch.wrapImmutable
+import com.huanchengfly.tieba.post.ui.common.MemeContentRender
 import com.huanchengfly.tieba.post.ui.common.PbContentRender
 import com.huanchengfly.tieba.post.ui.common.PicContentRender
 import com.huanchengfly.tieba.post.ui.common.TextContentRender.Companion.appendText
@@ -336,19 +337,31 @@ val List<PbContent>.renders: ImmutableList<PbContentRender>
                 }
 
                 20 -> {
-                    val width = it.bsize.split(",")[0].toInt()
-                    val height = it.bsize.split(",")[1].toInt()
-                    renders.add(
-                        PicContentRender(
-                            picUrl = it.src,
-                            originUrl = it.src,
-                            showOriginBtn = it.showOriginalBtn == 1,
-                            originSize = it.originSize,
-                            picId = ImageUtil.getPicId(it.src),
-                            width = width,
-                            height = height
+                    val meme = it.memeInfo
+                    if (meme != null && meme.picUrl.isNotEmpty()) {
+                        renders.add(
+                            MemeContentRender(
+                                picUrl = meme.picUrl,
+                                width = meme.width,
+                                height = meme.height,
+                                picId = meme.picId
+                            )
                         )
-                    )
+                    } else {
+                        val width = it.bsize.split(",")[0].toInt()
+                        val height = it.bsize.split(",")[1].toInt()
+                        renders.add(
+                            PicContentRender(
+                                picUrl = it.src,
+                                originUrl = it.src,
+                                showOriginBtn = it.showOriginalBtn == 1,
+                                originSize = it.originSize,
+                                picId = ImageUtil.getPicId(it.src),
+                                width = width,
+                                height = height
+                            )
+                        )
+                    }
                 }
             }
         }
@@ -369,7 +382,9 @@ val Post.contentRenders: ImmutableList<PbContentRender>
                         it.picUrl,
                         it.originUrl,
                         it.showOriginBtn,
-                        it.originSize
+                        it.originSize,
+                        width = it.width,
+                        height = it.height,
                     )
                 )
             } else it

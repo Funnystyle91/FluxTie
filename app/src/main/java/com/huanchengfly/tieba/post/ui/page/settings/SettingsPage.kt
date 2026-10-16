@@ -20,6 +20,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BugReport
+import androidx.compose.material.icons.outlined.EmojiEmotions
 import androidx.compose.material.icons.outlined.OfflineBolt
 import androidx.compose.material.icons.outlined.Update
 import androidx.compose.material.icons.rounded.AccountCircle
@@ -53,6 +54,7 @@ import com.huanchengfly.tieba.post.ui.page.destinations.BlockSettingsPageDestina
 import com.huanchengfly.tieba.post.ui.page.destinations.CustomSettingsPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.HabitSettingsPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.LoginPageDestination
+import com.huanchengfly.tieba.post.ui.page.destinations.MemeEmoticonPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.OKSignSettingsPageDestination
 import com.huanchengfly.tieba.post.ui.page.settings.custom.AppearanceCard
 import com.huanchengfly.tieba.post.ui.page.settings.custom.CardDivider
@@ -176,6 +178,13 @@ fun SettingsPage(
                             title = stringResource(id = R.string.title_settings_read_habit),
                             summary = stringResource(id = R.string.summary_settings_habit),
                             onClick = { navigator.navigate(HabitSettingsPageDestination) }
+                        )
+                        CardDivider()
+                        SettingRow(
+                            icon = Icons.Outlined.EmojiEmotions,
+                            title = stringResource(id = R.string.title_meme_emoticon),
+                            summary = stringResource(id = R.string.summary_meme_emoticon),
+                            onClick = { navigator.navigate(MemeEmoticonPageDestination) }
                         )
                     }
                 }

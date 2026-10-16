@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.material.ExperimentalMaterialApi
@@ -175,6 +176,31 @@ data class PicContentRender(
 
     override fun toString(): String {
         return "[图片]"
+    }
+}
+
+@Stable
+data class MemeContentRender(
+    val picUrl: String,
+    val width: Int,
+    val height: Int,
+    val picId: Long,
+) : PbContentRender {
+    @Composable
+    override fun Render() {
+        val ratio = if (width > 0 && height > 0) width * 1f / height else 1f
+        AsyncImage(
+            imageUri = picUrl,
+            contentDescription = stringResource(id = R.string.emoticon, ""),
+            modifier = Modifier
+                .height(100.dp)
+                .aspectRatio(ratio.coerceIn(0.5f, 2f)),
+            contentScale = ContentScale.Fit
+        )
+    }
+
+    override fun toString(): String {
+        return "[表情]"
     }
 }
 
