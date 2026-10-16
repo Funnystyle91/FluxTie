@@ -908,10 +908,15 @@ private fun EmoticonPanel(
                     selectedContentColor = ExtendedTheme.colors.primary,
                     unselectedContentColor = ExtendedTheme.colors.textSecondary,
                 ) {
-                    Text(
-                        text = stringResource(id = R.string.title_meme_classic),
-                        fontSize = 13.sp
-                    )
+                    Box(
+                        modifier = Modifier.height(48.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.title_meme_classic),
+                            fontSize = 13.sp
+                        )
+                    }
                 }
                 Tab(
                     selected = pagerState.currentPage == 1,
@@ -919,10 +924,15 @@ private fun EmoticonPanel(
                     selectedContentColor = ExtendedTheme.colors.primary,
                     unselectedContentColor = ExtendedTheme.colors.textSecondary,
                 ) {
-                    Text(
-                        text = stringResource(id = R.string.title_meme_collect),
-                        fontSize = 13.sp
-                    )
+                    Box(
+                        modifier = Modifier.height(48.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.title_meme_collect),
+                            fontSize = 13.sp
+                        )
+                    }
                 }
                 Tab(
                     selected = pagerState.currentPage == 2,
@@ -930,10 +940,15 @@ private fun EmoticonPanel(
                     selectedContentColor = ExtendedTheme.colors.primary,
                     unselectedContentColor = ExtendedTheme.colors.textSecondary,
                 ) {
-                    Text(
-                        text = stringResource(id = R.string.title_meme_diy),
-                        fontSize = 13.sp
-                    )
+                    Box(
+                        modifier = Modifier.height(48.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.title_meme_diy),
+                            fontSize = 13.sp
+                        )
+                    }
                 }
             }
             HorizontalPager(

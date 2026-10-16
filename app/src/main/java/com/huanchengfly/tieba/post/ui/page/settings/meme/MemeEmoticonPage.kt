@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -178,10 +179,15 @@ fun MemeEmoticonPage(
                         selectedContentColor = ExtendedTheme.colors.primary,
                         unselectedContentColor = ExtendedTheme.colors.textSecondary,
                     ) {
-                        Text(
-                            text = stringResource(id = R.string.title_meme_collect),
-                            fontSize = 13.sp
-                        )
+                        Box(
+                            modifier = Modifier.height(48.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = stringResource(id = R.string.title_meme_collect),
+                                fontSize = 13.sp
+                            )
+                        }
                     }
                     Tab(
                         selected = pagerState.currentPage == 1,
@@ -189,10 +195,15 @@ fun MemeEmoticonPage(
                         selectedContentColor = ExtendedTheme.colors.primary,
                         unselectedContentColor = ExtendedTheme.colors.textSecondary,
                     ) {
-                        Text(
-                            text = stringResource(id = R.string.title_meme_diy),
-                            fontSize = 13.sp
-                        )
+                        Box(
+                            modifier = Modifier.height(48.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = stringResource(id = R.string.title_meme_diy),
+                                fontSize = 13.sp
+                            )
+                        }
                     }
                 }
                 HorizontalPager(
