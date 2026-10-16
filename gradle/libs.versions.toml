@@ -73,8 +73,6 @@ wire-runtime = { group = "com.squareup.wire", name = "wire-runtime", version.ref
 # Semver
 net-swiftzer-semver-semver = { group = "net.swiftzer.semver", name = "semver", version = "2.1.0" }
 
-# Color Picker
-godaddy-color-picker = { group = "com.godaddy.android.colorpicker", name = "compose-color-picker", version = "0.7.0" }
 
 # Lottie
 airbnb-lottie = { group = "com.airbnb.android", name = "lottie", version.ref = "airbnb-lottie" }
