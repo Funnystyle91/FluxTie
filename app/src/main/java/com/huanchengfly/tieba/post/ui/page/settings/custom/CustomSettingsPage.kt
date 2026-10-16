@@ -81,6 +81,11 @@ import com.huanchengfly.tieba.post.goToActivity
 import com.huanchengfly.tieba.post.rememberPreferenceAsMutableState
 import com.huanchengfly.tieba.post.rememberPreferenceAsState
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import com.huanchengfly.tieba.post.ui.page.settings.components.AppearanceCard
+import com.huanchengfly.tieba.post.ui.page.settings.components.CardDivider
+import com.huanchengfly.tieba.post.ui.page.settings.components.SectionLabel
+import com.huanchengfly.tieba.post.ui.page.settings.components.SettingRow
+import com.huanchengfly.tieba.post.ui.page.settings.components.SwitchSettingRow
 import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.Dialog
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
@@ -551,128 +556,6 @@ fun CustomSettingsPage(
             }
         }
     }
-}
-
-@Composable
-internal fun SectionLabel(text: String, icon: ImageVector? = null) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        modifier = Modifier.padding(start = 20.dp, end = 16.dp, top = 24.dp, bottom = 10.dp)
-    ) {
-        if (icon != null) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = ExtendedTheme.colors.primary,
-                modifier = Modifier.size(18.dp)
-            )
-        }
-        Text(
-            text = text,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = ExtendedTheme.colors.primary
-        )
-    }
-}
-
-/** Bettbox 风格分组卡片：圆角 20，组内行间细分隔线 */
-@Composable
-internal fun AppearanceCard(
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 5.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(color = ExtendedTheme.colors.card),
-        content = content
-    )
-}
-
-@Composable
-internal fun CardDivider() {
-    Divider(
-        thickness = 1.dp,
-        color = ExtendedTheme.colors.divider.copy(alpha = if (ExtendedTheme.colors.isNightMode) 0.45f else 0.6f),
-        modifier = Modifier.padding(start = 16.dp, end = 16.dp)
-    )
-}
-
-@Composable
-internal fun SettingRow(
-    icon: ImageVector,
-    title: String,
-    summary: String? = null,
-    enabled: Boolean = true,
-    onClick: (() -> Unit)? = null,
-    trailing: (@Composable () -> Unit)? = null,
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .alpha(if (enabled) 1f else 0.5f)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                enabled = enabled && onClick != null,
-                onClick = { onClick?.invoke() }
-            )
-            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = ExtendedTheme.colors.textSecondary,
-            modifier = Modifier.size(24.dp)
-        )
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, style = MaterialTheme.typography.subtitle1)
-            if (summary != null) {
-                Text(
-                    text = summary,
-                    style = MaterialTheme.typography.body2,
-                    color = ExtendedTheme.colors.textSecondary
-                )
-            }
-        }
-        trailing?.invoke()
-    }
-}
-
-@Composable
-internal fun SwitchSettingRow(
-    icon: ImageVector,
-    title: String,
-    summary: String? = null,
-    summaryOn: String? = null,
-    summaryOff: String? = null,
-    key: String,
-    defaultValue: Boolean,
-    enabled: Boolean = true,
-    onCheckedChange: ((Boolean) -> Unit)? = null,
-) {
-    var checked by rememberPreferenceAsMutableState(
-        key = booleanPreferencesKey(key),
-        defaultValue = defaultValue
-    )
-    SettingRow(
-        icon = icon,
-        title = title,
-        summary = if (checked) summaryOn ?: summary else summaryOff ?: summary,
-        enabled = enabled,
-        onClick = {
-            checked = !checked
-            onCheckedChange?.invoke(checked)
-        },
-        trailing = {
-            Switch(checked = checked, onCheckedChange = null, enabled = enabled)
-        }
-    )
 }
 
 @Composable

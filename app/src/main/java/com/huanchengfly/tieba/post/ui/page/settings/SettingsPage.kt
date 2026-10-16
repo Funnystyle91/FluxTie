@@ -56,11 +56,11 @@ import com.huanchengfly.tieba.post.ui.page.destinations.HabitSettingsPageDestina
 import com.huanchengfly.tieba.post.ui.page.destinations.LoginPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.MemeEmoticonPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.OKSignSettingsPageDestination
-import com.huanchengfly.tieba.post.ui.page.settings.custom.AppearanceCard
-import com.huanchengfly.tieba.post.ui.page.settings.custom.CardDivider
-import com.huanchengfly.tieba.post.ui.page.settings.custom.SectionLabel
-import com.huanchengfly.tieba.post.ui.page.settings.custom.SettingRow
-import com.huanchengfly.tieba.post.ui.page.settings.custom.SwitchSettingRow
+import com.huanchengfly.tieba.post.ui.page.settings.components.AppearanceCard
+import com.huanchengfly.tieba.post.ui.page.settings.components.CardDivider
+import com.huanchengfly.tieba.post.ui.page.settings.components.SectionLabel
+import com.huanchengfly.tieba.post.ui.page.settings.components.SettingRow
+import com.huanchengfly.tieba.post.ui.page.settings.components.SwitchSettingRow
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
 import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.LocalSnackbarHostState
