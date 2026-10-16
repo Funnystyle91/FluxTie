@@ -121,6 +121,7 @@ fun HabitSettingsPage(
                             "3" to stringResource(id = R.string.title_image_load_type_all_no)
                         ),
                         defaultValue = "0",
+                        key = "image_load_type",
                     )
                     CardDivider()
                     ListSettingRow(
@@ -132,6 +133,7 @@ fun HabitSettingsPage(
                             "2" to stringResource(id = R.string.title_image_watermark_forum_name)
                         ),
                         defaultValue = "2",
+                        key = "pic_watermark_type",
                     )
                     CardDivider()
                     SwitchSettingRow(
@@ -186,6 +188,7 @@ fun HabitSettingsPage(
                             "1" to stringResource(id = R.string.title_sort_by_send),
                         ),
                         defaultValue = "0",
+                        key = "default_sort_type",
                     )
                     CardDivider()
                     ListSettingRow(
@@ -198,6 +201,7 @@ fun HabitSettingsPage(
                             "hide" to stringResource(id = R.string.btn_hide)
                         ),
                         defaultValue = "post",
+                        key = "forumFabFunction",
                     )
                     CardDivider()
                     SwitchSettingRow(

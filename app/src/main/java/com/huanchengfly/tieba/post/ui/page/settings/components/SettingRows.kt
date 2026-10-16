@@ -6,8 +6,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -17,11 +18,11 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.annotation.StringRes
-import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.collectPreferenceAsState
 import com.huanchengfly.tieba.post.dataStore
+import com.huanchengfly.tieba.post.putString
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.widgets.compose.Dialog
 import com.huanchengfly.tieba.post.ui.widgets.compose.DialogNegativeButton
@@ -30,7 +31,7 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.TimePickerDialog
 import com.huanchengfly.tieba.post.ui.widgets.compose.rememberDialogState
 import com.huanchengfly.tieba.post.ui.widgets.compose.picker.ListSinglePicker
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.map
 
 /**
  * 卡片式设置行组件补充：
@@ -56,12 +57,11 @@ internal fun ListSettingRow(
 ) {
     val context = LocalContext.current
     val dialogState = rememberDialogState()
-    val coroutineScope = rememberCoroutineScope()
+    // 只读收集当前值（key 为 null 时不收集，如切换账号场景）
     val current: String? = if (key != null) {
-        val prefs by context.dataStore.collectPreferenceAsState(
-            key = stringPreferencesKey(key),
-            defaultValue = defaultValue
-        )
+        val prefs by remember {
+            context.dataStore.data.map { it[stringPreferencesKey(key)] ?: defaultValue }
+        }.collectAsState(initial = defaultValue)
         prefs
     } else {
         null
@@ -88,9 +88,7 @@ internal fun ListSettingRow(
             selectedPosition = entries.keys.indexOf(current),
             onItemSelected = { _, _, value, _ ->
                 key?.let { k ->
-                    coroutineScope.launch {
-                        context.dataStore.edit { it[stringPreferencesKey(k)] = value }
-                    }
+                    context.dataStore.putString(k, value)
                 }
                 onValueChange?.invoke(value)
                 dialogState.show = false
@@ -115,7 +113,6 @@ internal fun TextInputSettingRow(
 ) {
     val context = LocalContext.current
     val dialogState = rememberDialogState()
-    val coroutineScope = rememberCoroutineScope()
     val current by context.dataStore.collectPreferenceAsState(
         key = stringPreferencesKey(key),
         defaultValue = defaultValue
@@ -134,9 +131,7 @@ internal fun TextInputSettingRow(
         title = { Text(text = dialogTitle ?: title) },
         initialValue = current,
         onConfirm = { value ->
-            coroutineScope.launch {
-                context.dataStore.edit { it[stringPreferencesKey(key)] = value }
-            }
+            context.dataStore.putString(key, value)
             onValueSaved?.invoke(value)
         },
     )
@@ -155,7 +150,6 @@ internal fun TimePickerSettingRow(
 ) {
     val context = LocalContext.current
     val dialogState = rememberDialogState()
-    val coroutineScope = rememberCoroutineScope()
     val current by context.dataStore.collectPreferenceAsState(
         key = stringPreferencesKey(key),
         defaultValue = defaultValue
@@ -174,9 +168,7 @@ internal fun TimePickerSettingRow(
         title = { Text(text = dialogTitle ?: title) },
         currentTime = current,
         onConfirm = { time ->
-            coroutineScope.launch {
-                context.dataStore.edit { it[stringPreferencesKey(key)] = time }
-            }
+            context.dataStore.putString(key, time)
         },
     )
 }
