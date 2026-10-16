@@ -19,12 +19,14 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.core.graphics.toColorInt
 import com.huanchengfly.tieba.post.App
 import com.huanchengfly.tieba.post.R
-import com.huanchengfly.tieba.post.rememberPreferenceAsState
+import com.huanchengfly.tieba.post.collectPreferenceAsState
+import com.huanchengfly.tieba.post.dataStore
+import com.huanchengfly.tieba.post.utils.DEFAULT_SEED_COLOR
 import com.huanchengfly.tieba.post.utils.ThemeUtil
 import com.huanchengfly.tieba.post.utils.appPreferences
+import com.huanchengfly.tieba.post.utils.parseColorHexOrNull
 import com.huanchengfly.tieba.post.utils.compose.darken
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamicColorScheme
@@ -463,16 +465,7 @@ private fun getSeedColor(
     isAmoled: Boolean,
     toolbarPrimaryColor: Boolean,
 ): ExtendedColors {
-    val seedColor = runCatching {
-        // 兼容 0xAARRGGBB 与 #RRGGBB 两种存储格式
-        Color(
-            if (seedHex.startsWith("0x", ignoreCase = true)) {
-                seedHex.substring(2).toLong(16).toInt()
-            } else {
-                seedHex.toColorInt()
-            }
-        )
-    }.getOrDefault(Color(0xFF2196F3))
+    val seedColor = Color(parseColorHexOrNull(seedHex) ?: DEFAULT_SEED_COLOR)
     val scheme = dynamicColorScheme(
         seedColor = seedColor,
         isDark = isDark,
@@ -524,7 +517,8 @@ fun TiebaLiteTheme(
 ) {
     val context = LocalContext.current
     val theme by remember { ThemeUtil.themeState }
-    val isDynamicTheme by rememberPreferenceAsState(
+    // 主题键一律只读（写入均由设置页显式操作完成），避免组合期默认值写回 DataStore
+    val isDynamicTheme by context.dataStore.collectPreferenceAsState(
         key = booleanPreferencesKey("useDynamicColorTheme"),
         defaultValue = false
     )
@@ -537,15 +531,15 @@ fun TiebaLiteTheme(
 
     val useDynamicTheme = isDynamicTheme && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
-    val useSeedTheme by rememberPreferenceAsState(
+    val useSeedTheme by context.dataStore.collectPreferenceAsState(
         key = booleanPreferencesKey("use_seed_theme"),
-        defaultValue = false
+        defaultValue = true
     )
-    val seedVariant by rememberPreferenceAsState(
+    val seedVariant by context.dataStore.collectPreferenceAsState(
         key = stringPreferencesKey("theme_scheme_variant"),
         defaultValue = "TonalSpot"
     )
-    val seedColorPref by rememberPreferenceAsState(
+    val seedColorPref by context.dataStore.collectPreferenceAsState(
         key = stringPreferencesKey("custom_primary_color"),
         defaultValue = "#FF2196F3"
     )

@@ -44,8 +44,8 @@ import java.util.Locale
 object ThemeUtil {
     val themeState: MutableState<String> by lazy(mode = LazyThreadSafetyMode.SYNCHRONIZED) {
         mutableStateOf(
-            if (App.isInitialized) dataStore.getString(KEY_THEME, THEME_DEFAULT)
-            else THEME_DEFAULT
+            if (App.isInitialized) dataStore.getString(KEY_THEME, THEME_CUSTOM)
+            else THEME_CUSTOM
         )
     }
 
@@ -108,9 +108,9 @@ object ThemeUtil {
 
     private fun getOldTheme(): String {
         val oldTheme =
-            dataStore.getString(KEY_OLD_THEME, THEME_DEFAULT).takeUnless { isNightMode(it) }
+            dataStore.getString(KEY_OLD_THEME, THEME_CUSTOM).takeUnless { isNightMode(it) }
 
-        return oldTheme ?: THEME_DEFAULT
+        return oldTheme ?: THEME_CUSTOM
     }
 
     fun switchTheme(newTheme: String, recordOldTheme: Boolean = true) {
@@ -227,8 +227,10 @@ object ThemeUtil {
         val theme = getRawTheme()
         val isToolbarPrimaryColor: Boolean = INSTANCE.appPreferences.toolbarPrimaryColor
         return if (theme == THEME_CUSTOM) {
-            if (INSTANCE.appPreferences.useSeedTheme) {
-                // MD3 种子主题：状态栏字体跟随明暗模式，浅色用深色字体
+            if (INSTANCE.appPreferences.useSeedTheme ||
+                INSTANCE.appPreferences.useDynamicColorTheme
+            ) {
+                // MD3 种子/Monet 主题：状态栏字体跟随明暗模式，浅色用深色字体
                 !isNightMode(theme)
             } else {
                 INSTANCE.appPreferences.customStatusBarFontDark
@@ -418,7 +420,7 @@ object ThemeUtil {
             THEME_AMOLED_DARK,
             -> theme.lowercase(Locale.getDefault())
 
-            else -> THEME_DEFAULT
+            else -> THEME_CUSTOM
         }
     }
 }

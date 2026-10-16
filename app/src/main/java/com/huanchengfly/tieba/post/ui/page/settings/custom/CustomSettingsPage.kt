@@ -68,7 +68,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.toColorInt
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.huanchengfly.tieba.post.App
@@ -88,22 +87,17 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
 import com.huanchengfly.tieba.post.ui.widgets.compose.Switch
 import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.huanchengfly.tieba.post.ui.widgets.compose.rememberDialogState
+import com.huanchengfly.tieba.post.utils.DEFAULT_SEED_COLOR
 import com.huanchengfly.tieba.post.utils.appPreferences
 import com.huanchengfly.tieba.post.utils.ThemeUtil
+import com.huanchengfly.tieba.post.utils.parseColorHexOrNull
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
 private val SwatchShape = RoundedCornerShape(14.dp)
 
-private fun parseSeedColor(hex: String): Color = runCatching {
-    Color(
-        if (hex.startsWith("0x", ignoreCase = true)) {
-            hex.substring(2).toLong(16).toInt()
-        } else {
-            hex.toColorInt()
-        }
-    )
-}.getOrDefault(Color(0xFF2196F3))
+private fun parseSeedColor(hex: String): Color =
+    Color(parseColorHexOrNull(hex) ?: DEFAULT_SEED_COLOR)
 
 private data class ThemeSwatch(
     val id: String,
@@ -149,7 +143,7 @@ fun CustomSettingsPage(
     )
     var useSeedTheme by rememberPreferenceAsMutableState(
         key = booleanPreferencesKey("use_seed_theme"),
-        defaultValue = false
+        defaultValue = true
     )
     var seedColorPref by rememberPreferenceAsMutableState(
         key = stringPreferencesKey("custom_primary_color"),
@@ -172,7 +166,7 @@ fun CustomSettingsPage(
     val currentIsNight = ThemeUtil.isNightMode()
     val oldTheme by rememberPreferenceAsState(
         key = stringPreferencesKey(ThemeUtil.KEY_OLD_THEME),
-        defaultValue = ThemeUtil.THEME_DEFAULT
+        defaultValue = ThemeUtil.THEME_CUSTOM
     )
     val lightPreviewTheme = if (currentIsNight) oldTheme else currentTheme
     val hapticFeedback = LocalHapticFeedback.current
@@ -449,7 +443,7 @@ fun CustomSettingsPage(
             val seedRows = (seedPresets + ThemeSwatch(
                 "custom",
                 customLabel,
-                Color(runCatching { seedColorPref.toColorInt() }.getOrDefault(0xFF2196F3.toInt())),
+                Color(parseColorHexOrNull(seedColorPref) ?: DEFAULT_SEED_COLOR),
                 Color.Transparent,
                 Color.Transparent
             )).chunked(4)

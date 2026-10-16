@@ -7,7 +7,6 @@ import android.app.Application
 import android.content.Context
 import android.content.res.Configuration
 import android.content.res.Resources
-import android.graphics.Color
 import android.graphics.ImageDecoder
 import android.graphics.drawable.Drawable
 import android.os.Build
@@ -18,6 +17,9 @@ import androidx.annotation.Keep
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.ui.graphics.toArgb
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import com.github.gzuliyujiang.oaid.DeviceID
 import com.github.panpf.sketch.Sketch
 import com.github.panpf.sketch.SketchFactory
@@ -46,6 +48,7 @@ import com.huanchengfly.tieba.post.utils.AccountUtil
 import com.huanchengfly.tieba.post.utils.AppIconUtil
 import com.huanchengfly.tieba.post.utils.BlockManager
 import com.huanchengfly.tieba.post.utils.ClientUtils
+import com.huanchengfly.tieba.post.utils.DEFAULT_SEED_COLOR
 import com.huanchengfly.tieba.post.utils.EmoticonManager
 import com.huanchengfly.tieba.post.utils.SharedPreferencesUtil
 import com.huanchengfly.tieba.post.utils.ThemeUtil
@@ -53,6 +56,7 @@ import com.huanchengfly.tieba.post.utils.Util
 import com.huanchengfly.tieba.post.utils.appPreferences
 import com.huanchengfly.tieba.post.utils.applicationMetaData
 import com.huanchengfly.tieba.post.utils.packageInfo
+import com.huanchengfly.tieba.post.utils.parseColorHexOrNull
 import dagger.hilt.android.HiltAndroidApp
 import java.nio.ByteBuffer
 import kotlin.concurrent.thread
@@ -92,6 +96,7 @@ class App : Application(), SketchFactory {
         }
         AccountUtil.init(this)
         Config.init(this)
+        migrateThemeDefaults()
         val isSelfBuild = applicationMetaData.getBoolean("is_self_build")
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         ThemeUtils.init(ThemeDelegate)
@@ -102,6 +107,36 @@ class App : Application(), SketchFactory {
             AppIconUtil.setIcon()
             runBlocking { BlockManager.init() }
             EmoticonManager.init(this@App)
+        }
+    }
+
+    /**
+     * 主题默认值迁移（条件幂等，无需标记键）：
+     * 对「从未主动选择主题」的用户（use_seed_theme != true 且 useDynamicColorTheme != true）
+     * 切到默认种子色主题（custom），修复旧默认（tieba）主色为纯黑的问题。
+     * - 点过色卡（seed=true）或使用 Monet（dynamic=true）的用户不受影响；
+     * - theme 已是深色系（夜间自动切换写入）时保持不变，仅启用种子色，避免深色中闪变浅色；
+     * - old_theme 为空或旧默认时写 custom，避免深色切回浅色时回到黑白。
+     */
+    private fun migrateThemeDefaults() {
+        runBlocking {
+            dataStore.edit { prefs ->
+                val useSeed = prefs[booleanPreferencesKey("use_seed_theme")] ?: false
+                val useDynamic = prefs[booleanPreferencesKey("useDynamicColorTheme")] ?: false
+                if (useSeed || useDynamic) return@edit
+                val theme = prefs[stringPreferencesKey(ThemeUtil.KEY_THEME)]
+                if (theme == null || theme == ThemeUtil.THEME_DEFAULT) {
+                    prefs[stringPreferencesKey(ThemeUtil.KEY_THEME)] = ThemeUtil.THEME_CUSTOM
+                }
+                val oldTheme = prefs[stringPreferencesKey(ThemeUtil.KEY_OLD_THEME)]
+                if (oldTheme == null || oldTheme == ThemeUtil.THEME_DEFAULT) {
+                    prefs[stringPreferencesKey(ThemeUtil.KEY_OLD_THEME)] = ThemeUtil.THEME_CUSTOM
+                }
+                prefs[booleanPreferencesKey("use_seed_theme")] = true
+                if (prefs[stringPreferencesKey("custom_primary_color")] == null) {
+                    prefs[stringPreferencesKey("custom_primary_color")] = "#FF2196F3"
+                }
+            }
         }
     }
 
@@ -276,18 +311,12 @@ class App : Application(), SketchFactory {
                             dynamicTonalPalette.primary40.toArgb()
                         }
                 } else if (ThemeUtil.THEME_CUSTOM == theme) {
-                    val customPrimaryColorStr = context.appPreferences.customPrimaryColor
-                    return if (customPrimaryColorStr != null) {
-                        // AGP 时代遗留数据可能是任意格式，解析失败回退默认主题色而不是崩溃
-                        runCatching { Color.parseColor(customPrimaryColorStr) }
-                            .getOrElse { getColorByAttr(context, attrId, ThemeUtil.THEME_DEFAULT) }
-                    } else getColorByAttr(context, attrId, ThemeUtil.THEME_DEFAULT)
+                    // 兼容 "0x"/"#" 两种历史格式；解析失败回退默认种子色（与 Compose 端 getSeedColor 兜底一致）
+                    return parseColorHexOrNull(context.appPreferences.customPrimaryColor)
+                        ?: DEFAULT_SEED_COLOR
                 } else if (ThemeUtil.isTranslucentTheme(theme)) {
-                    val primaryColorStr = context.appPreferences.translucentPrimaryColor
-                    return if (primaryColorStr != null) {
-                        runCatching { Color.parseColor(primaryColorStr) }
-                            .getOrElse { getColorByAttr(context, attrId, ThemeUtil.THEME_DEFAULT) }
-                    } else getColorByAttr(context, attrId, ThemeUtil.THEME_DEFAULT)
+                    return parseColorHexOrNull(context.appPreferences.translucentPrimaryColor)
+                        ?: getColorByAttr(context, attrId, ThemeUtil.THEME_DEFAULT)
                 }
                     return context.getColorCompat(
                         resources.getIdentifier(
