@@ -1,18 +1,22 @@
 package com.huanchengfly.tieba.post.ui.page.settings.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.MaterialTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.annotation.StringRes
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.huanchengfly.tieba.post.R
@@ -96,7 +100,7 @@ internal fun ListSettingRow(
     }
 }
 
-/** 文本输入行（替代旧 EditTextPref）：点击弹输入对话框，确认后写回 */
+/** 文本输入行（替代旧 EditTextPref）：点击弹输入对话框，确认后写回；[emptySummary] 为值为空时的占位摘要 */
 @Composable
 internal fun TextInputSettingRow(
     icon: ImageVector,
@@ -104,6 +108,7 @@ internal fun TextInputSettingRow(
     key: String,
     defaultValue: String = "",
     summary: String? = null,
+    @StringRes emptySummary: Int? = null,
     dialogTitle: String? = null,
     enabled: Boolean = true,
     onValueSaved: ((String) -> Unit)? = null,
@@ -119,7 +124,7 @@ internal fun TextInputSettingRow(
     SettingRow(
         icon = icon,
         title = title,
-        summary = summary ?: current.ifBlank { null },
+        summary = summary ?: current.ifBlank { emptySummary?.let { context.getString(it) } },
         enabled = enabled,
         onClick = { dialogState.show() },
     )
@@ -176,15 +181,18 @@ internal fun TimePickerSettingRow(
     )
 }
 
-/** 卡片外提示块（替代各设置页的 chip 提示 Text） */
+/** 卡片外提示块（chip 样式，替代各设置页的提示 Text） */
 @Composable
 internal fun TipCard(text: AnnotatedString, modifier: Modifier = Modifier) {
     Text(
         text = text,
-        style = MaterialTheme.typography.body2,
-        color = ExtendedTheme.colors.textSecondary,
+        fontSize = 12.sp,
+        color = ExtendedTheme.colors.onChip,
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 8.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(ExtendedTheme.colors.chip)
+            .padding(12.dp)
     )
 }

@@ -67,6 +67,10 @@ import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.arch.hiltViewModel
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.page.destinations.LogPageDestination
+import com.huanchengfly.tieba.post.ui.page.settings.components.AppearanceCard
+import com.huanchengfly.tieba.post.ui.page.settings.components.CardDivider
+import com.huanchengfly.tieba.post.ui.page.settings.components.SectionLabel
+import com.huanchengfly.tieba.post.ui.page.settings.components.SettingRow
 import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.ConfettiBurst
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
@@ -249,19 +253,38 @@ fun AboutPage(
 
             // ── 信息
             item {
-                AboutSectionLabel(text = stringResource(id = R.string.title_about_info))
+                SectionLabel(
+                    text = stringResource(id = R.string.title_about_info),
+                    icon = Icons.Rounded.Info
+                )
             }
             item {
-                AboutCard {
-                    AboutRow(
+                AppearanceCard {
+                    SettingRow(
                         icon = Icons.Rounded.History,
                         title = stringResource(id = R.string.title_check_update),
+                        trailing = {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                                contentDescription = null,
+                                tint = ExtendedTheme.colors.textSecondary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        },
                         onClick = { updateViewModel.check() }
                     )
-                    AboutDivider()
-                    AboutRow(
+                    CardDivider()
+                    SettingRow(
                         icon = Icons.Rounded.Description,
                         title = stringResource(id = R.string.title_open_source_license),
+                        trailing = {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                                contentDescription = null,
+                                tint = ExtendedTheme.colors.textSecondary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        },
                         onClick = { launchUrl(context, navigator, "$REPO_URL/blob/main/LICENSE") }
                     )
                 }
@@ -269,121 +292,43 @@ fun AboutPage(
 
             // ── 开发
             item {
-                AboutSectionLabel(text = stringResource(id = R.string.title_about_develop))
+                SectionLabel(
+                    text = stringResource(id = R.string.title_about_develop),
+                    icon = Icons.Rounded.Code
+                )
             }
             item {
-                AboutCard {
-                    AboutRow(
+                AppearanceCard {
+                    SettingRow(
                         icon = Icons.Rounded.Code,
                         title = stringResource(id = R.string.title_project_source),
                         summary = "GitHub",
+                        trailing = {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                                contentDescription = null,
+                                tint = ExtendedTheme.colors.textSecondary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        },
                         onClick = { launchUrl(context, navigator, REPO_URL) }
                     )
-                    AboutDivider()
-                    AboutRow(
+                    CardDivider()
+                    SettingRow(
                         icon = Icons.Rounded.BugReport,
                         title = stringResource(id = R.string.title_app_logs),
+                        trailing = {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                                contentDescription = null,
+                                tint = ExtendedTheme.colors.textSecondary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        },
                         onClick = { navigator.navigate(LogPageDestination) }
                     )
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun AboutSectionLabel(text: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 24.dp, end = 16.dp, top = 24.dp, bottom = 10.dp)
-    ) {
-        Icon(
-            imageVector = Icons.Rounded.Info,
-            contentDescription = null,
-            tint = ExtendedTheme.colors.primary,
-            modifier = Modifier.size(16.dp)
-        )
-        Text(
-            text = text,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = ExtendedTheme.colors.primary
-        )
-    }
-}
-
-@Composable
-private fun AboutCard(
-    content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(color = ExtendedTheme.colors.card),
-        content = content
-    )
-}
-
-@Composable
-private fun AboutDivider() {
-    Divider(
-        thickness = 1.dp,
-        color = ExtendedTheme.colors.divider.copy(
-            alpha = if (ExtendedTheme.colors.isNightMode) 0.45f else 0.6f
-        ),
-        modifier = Modifier.padding(start = 56.dp, end = 16.dp)
-    )
-}
-
-@Composable
-private fun AboutRow(
-    icon: ImageVector,
-    title: String,
-    summary: String? = null,
-    onClick: () -> Unit,
-) {
-    val hapticFeedback = LocalHapticFeedback.current
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = {
-                    hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    onClick()
-                }
-            )
-            .padding(horizontal = 16.dp, vertical = 14.dp)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = ExtendedTheme.colors.textSecondary,
-            modifier = Modifier.size(24.dp)
-        )
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, style = MaterialTheme.typography.subtitle1)
-            if (summary != null) {
-                Text(
-                    text = summary,
-                    style = MaterialTheme.typography.body2,
-                    color = ExtendedTheme.colors.textSecondary
-                )
-            }
-        }
-        Icon(
-            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
-            contentDescription = null,
-            tint = ExtendedTheme.colors.textSecondary,
-            modifier = Modifier.size(18.dp)
-        )
     }
 }

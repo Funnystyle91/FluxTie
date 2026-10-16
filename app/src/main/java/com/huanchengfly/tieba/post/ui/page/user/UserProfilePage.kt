@@ -89,17 +89,14 @@ import com.huanchengfly.tieba.post.models.PhotoViewData
 import com.huanchengfly.tieba.post.models.PicItem
 import com.huanchengfly.tieba.post.models.database.Block
 import com.huanchengfly.tieba.post.toastShort
-import com.huanchengfly.tieba.post.ui.common.prefs.widgets.TextPref
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.TiebaLiteTheme
 import com.huanchengfly.tieba.post.ui.common.windowsizeclass.WindowWidthSizeClass
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
-import com.huanchengfly.tieba.post.ui.page.settings.LeadingIcon
 import com.huanchengfly.tieba.post.ui.page.user.edit.EditProfileActivity
 import com.huanchengfly.tieba.post.ui.page.user.likeforum.UserLikeForumPage
 import com.huanchengfly.tieba.post.ui.page.user.post.UserPostPage
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
-import com.huanchengfly.tieba.post.ui.widgets.compose.AvatarIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.Button
 import com.huanchengfly.tieba.post.ui.widgets.compose.Chip
@@ -128,6 +125,7 @@ import com.huanchengfly.tieba.post.utils.StringUtil.getShortNumString
 import com.huanchengfly.tieba.post.utils.TiebaUtil
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.FollowListPageDestination
+import com.huanchengfly.tieba.post.ui.page.settings.components.SettingRow
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.collections.immutable.ImmutableList
@@ -275,85 +273,61 @@ fun PermissionSettingDialogM2(
         Column(modifier = Modifier.fillMaxWidth()) {
             // 1. 禁止关注
             val followChecked = currentBean.follow == 1
-            TextPref(
+            SettingRow(
+                icon = Icons.Outlined.Block,
                 title = stringResource(id = R.string.text_ban_interaction_follow),
-                leadingIcon = {
-                    LeadingIcon {
-                        AvatarIcon(
-                            icon = Icons.Outlined.Block,
-                            size = Sizes.Small,
-                            contentDescription = null,
-                        )
-                    }
-                },
-                textColor = MaterialTheme.colors.onBackground,
                 onClick = {
                     val next = !followChecked
                     currentBean = currentBean.copy(follow = if (next) 1 else 0)
+                },
+                trailing = {
+                    Switch(
+                        checked = followChecked,
+                        onCheckedChange = { isChecked ->
+                            currentBean = currentBean.copy(follow = if (isChecked) 1 else 0)
+                        }
+                    )
                 }
-            ) {
-                Switch(
-                    checked = followChecked,
-                    onCheckedChange = { isChecked ->
-                        currentBean = currentBean.copy(follow = if (isChecked) 1 else 0)
-                    }
-                )
-            }
+            )
 
             // 2. 禁止互动
             val interactChecked = currentBean.interact == 1
-            TextPref(
+            SettingRow(
+                icon = Icons.Outlined.Block,
                 title = stringResource(id = R.string.text_ban_interaction_interact),
-                leadingIcon = {
-                    LeadingIcon {
-                        AvatarIcon(
-                            icon = Icons.Outlined.Block,
-                            size = Sizes.Small,
-                            contentDescription = null,
-                        )
-                    }
-                },
-                textColor = MaterialTheme.colors.onBackground,
                 summary = stringResource(id = R.string.tip_ban_interaction_interact),
                 onClick = {
                     val next = !interactChecked
                     currentBean = currentBean.copy(interact = if (next) 1 else 0)
+                },
+                trailing = {
+                    Switch(
+                        checked = interactChecked,
+                        onCheckedChange = { isChecked ->
+                            currentBean = currentBean.copy(interact = if (isChecked) 1 else 0)
+                        }
+                    )
                 }
-            ) {
-                Switch(
-                    checked = interactChecked,
-                    onCheckedChange = { isChecked ->
-                        currentBean = currentBean.copy(interact = if (isChecked) 1 else 0)
-                    }
-                )
-            }
+            )
 
             // 3. 禁止私信
             val chatChecked = currentBean.chat == 1
-            TextPref(
+            SettingRow(
+                icon = Icons.Outlined.Block,
                 title = stringResource(id = R.string.text_ban_interaction_chat),
-                leadingIcon = {
-                    LeadingIcon {
-                        AvatarIcon(
-                            icon = Icons.Outlined.Block,
-                            size = Sizes.Small,
-                            contentDescription = null,
-                        )
-                    }
-                },
-                textColor = MaterialTheme.colors.onBackground,
                 onClick = {
                     val next = !chatChecked
                     currentBean = currentBean.copy(chat = if (next) 1 else 0)
+                },
+                trailing = {
+                    Switch(
+                        checked = chatChecked,
+                        onCheckedChange = { isChecked ->
+                            currentBean = currentBean.copy(chat = if (isChecked) 1 else 0)
+                        }
+                    )
                 }
-            ) {
-                Switch(
-                    checked = chatChecked,
-                    onCheckedChange = { isChecked ->
-                        currentBean = currentBean.copy(chat = if (isChecked) 1 else 0)
-                    }
-                )
-            }
+            )
         }
     }
 }

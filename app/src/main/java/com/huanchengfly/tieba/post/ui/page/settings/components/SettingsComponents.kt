@@ -141,6 +141,7 @@ internal fun SwitchSettingRow(
     key: String,
     defaultValue: Boolean,
     enabled: Boolean = true,
+    summaryProvider: ((Boolean) -> String)? = null,
     onCheckedChange: ((Boolean) -> Unit)? = null,
 ) {
     var checked by rememberPreferenceAsMutableState(
@@ -150,7 +151,8 @@ internal fun SwitchSettingRow(
     SettingRow(
         icon = icon,
         title = title,
-        summary = if (checked) summaryOn ?: summary else summaryOff ?: summary,
+        summary = summaryProvider?.invoke(checked)
+            ?: if (checked) summaryOn ?: summary else summaryOff ?: summary,
         enabled = enabled,
         onClick = {
             checked = !checked
