@@ -657,7 +657,7 @@
 
     <!-- 主题色彩自定义 -->
     <string name="title_seed_follow_system">跟随系统</string>
-    <string name="title_custom_color">自定义颜色</string>
+    <string name="title_custom_seed_color">自定义颜色</string>
     <string name="label_color_hue">色相</string>
     <string name="label_color_chroma">彩度</string>
     <string name="label_color_tone">明度</string>
