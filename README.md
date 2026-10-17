@@ -5,7 +5,7 @@
 <h1 align="center">FluxTie</h1>
 
 <p align="center">
-  一款 Material 3 风格的<strong>非官方第三方贴吧客户端</strong> — 基于 TiebaLite 深度重构，全新外观体系 · 真悬浮底栏 · MD3 动态配色 · 细腻动效
+  基于 <a href="https://github.com/makise2060/FluxTie">makise2060/FluxTie</a> 上游代码，仅适配<strong>荣耀 AI 随心握</strong>握持优化，并加快应用启动动画。
 </p>
 
 <p align="center">
@@ -41,6 +41,17 @@
 - 🗂️ **分组卡片式设置** — 对齐 Android 13+ 系统设置观感的分组卡片体系，全局 Material 3 开关组件
 - 📋 **应用日志** — 内置日志查看器，级别过滤 / 一键复制 / 分享，问题反馈更高效
 - 💬 **完整贴吧能力** — 首页 / 动态（关注·推荐·热榜）/ 通知 / 我的，看贴回贴、一键签到等原版功能全部保留
+
+## 🤖 荣耀 AI 随心握适配
+
+荣耀 AI 随心握会根据当前握持方向自动偏移悬浮底栏，避免单手操作时拇指够不到屏幕另一侧的导航按钮。
+
+| 默认居中 | 左手握持 | 右手握持 |
+|:---:|:---:|:---:|
+| <img src="docs/images/smartgrip_center.jpg" width="240" /> | <img src="docs/images/smartgrip_left.jpg" width="240" /> | <img src="docs/images/smartgrip_right.jpg" width="240" /> |
+| 悬浮底栏居中显示 | 底栏向左侧偏移，便于右手拇指操作 | 底栏向右侧偏移，便于左手拇指操作 |
+
+> 论坛页右下角的刷新按钮（FAB）也会同步贴到握持侧并抬高，避免被底栏遮挡；触摸或滑动内容时会快速变淡，松开后柔和恢复。
 
 ## 🚀 相对原版的升级
 

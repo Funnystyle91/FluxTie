@@ -284,3 +284,9 @@
 -keepclassmembers,allowobfuscation class * {
  @com.google.gson.annotations.SerializedName <fields>;
 }
+
+# 荣耀 AI 随心握（SmartGrip）：保留官方 SDK 类，避免混淆后反射/接口调用失效
+-keep class com.hihonor.smartgripkit.** { *; }
+# 必须保留匿名子类（本工程 object : SmartGripEventListener 监听回调），否则 R8 会剥离/混淆导致握持失效
+-keep class * extends com.hihonor.smartgripkit.SmartGripEventListener { *; }
+-dontwarn com.hihonor.smartgripkit.**

@@ -5,6 +5,10 @@ import android.content.Intent
 import android.graphics.Typeface
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -62,10 +66,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -92,11 +99,13 @@ import com.huanchengfly.tieba.post.arch.emitGlobalEventSuspend
 import com.huanchengfly.tieba.post.arch.onEvent
 import com.huanchengfly.tieba.post.arch.onGlobalEvent
 import com.huanchengfly.tieba.post.arch.pageViewModel
+import com.huanchengfly.tieba.post.LocalGripState
 import com.huanchengfly.tieba.post.dataStore
 import com.huanchengfly.tieba.post.getInt
 import com.huanchengfly.tieba.post.models.ForumHistoryExtra
 import com.huanchengfly.tieba.post.models.database.History
 import com.huanchengfly.tieba.post.toastShort
+import com.huanchengfly.tieba.post.utils.GripStateHolder
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
@@ -660,79 +669,42 @@ fun ForumPage(
                         forumId = forumInfo?.get { id }
                     )
                 },
-                floatingActionButton = {
-                    if (context.appPreferences.forumFabFunction != "hide" || (context.appPreferences.hideReply == true && context.appPreferences.forumFabFunction == "post")) {
-                        FloatingActionButton(
-                            onClick = {
-                                when (context.appPreferences.forumFabFunction) {
-                                    "refresh" -> {
-                                        coroutineScope.launch {
-                                            if (currentPage >= 2) {
-                                                emitGlobalEvent(GeneralTabListUiEvent.BackToTop)
-                                                emitGlobalEvent(GeneralTabListUiEvent.Refresh())
-                                            } else {
-                                                emitGlobalEventSuspend(
-                                                    ForumThreadListUiEvent.BackToTop(
-                                                        currentPage == 1
-                                                    )
-                                                )
-                                                emitGlobalEventSuspend(
-                                                    ForumThreadListUiEvent.Refresh(
-                                                        currentPage == 1,
-                                                        getSortType(
-                                                            context,
-                                                            forumName
-                                                        )
-                                                    )
-                                                )
-                                            }
-                                        }
-                                    }
-
-                                    "back_to_top" -> {
-                                        coroutineScope.launch {
-                                            if (currentPage >= 2) {
-                                                emitGlobalEvent(GeneralTabListUiEvent.BackToTop)
-                                            } else {
-                                                emitGlobalEvent(
-                                                    ForumThreadListUiEvent.BackToTop(
-                                                        currentPage == 1
-                                                    )
-                                                )
-                                            }
-                                        }
-                                    }
-
-                                    else -> {
-                                        coroutineScope.launch {
-                                            emitGlobalEvent(
-                                                ForumThreadListUiEvent.AddThread(forumName)
-                                            )
-                                        }
-                                    }
-                                }
-                            },
-                            backgroundColor = ExtendedTheme.colors.windowBackground,
-                            contentColor = ExtendedTheme.colors.primary,
-                            modifier = Modifier.navigationBarsPadding()
-                        ) {
-                            Icon(
-                                imageVector = when (context.appPreferences.forumFabFunction) {
-                                    "refresh" -> Icons.Rounded.Refresh
-                                    "back_to_top" -> Icons.Rounded.VerticalAlignTop
-                                    else -> Icons.Rounded.Add
-                                },
-                                contentDescription = null
-                            )
-                        }
-                    }
-                }
+                floatingActionButton = {}
             ) { contentPadding ->
                 var isFakeLoading by remember { mutableStateOf(false) }
                 LaunchedEffect(isFakeLoading) {
                     if (isFakeLoading) {
                         delay(1000)
                         isFakeLoading = false
+                    }
+                }
+
+                // FAB 淡入淡出：手指触摸屏幕 或 页面内容滑动时淡到 0.22（淡出），
+                // 松开手后不立刻弹回，静止 500ms 且无触摸时柔和淡回 1.0（淡入），过渡平滑不突兀
+                val fabPressing = remember { mutableStateOf(false) }
+                val fabScrolling = remember { mutableStateOf(false) }
+                val fabScrollTime = remember { mutableLongStateOf(0L) }
+                val fabAlphaTarget = remember { mutableFloatStateOf(1f) }
+                // 变暗（淡出）要“即按即暗”、低延迟跟手：用 FastOutLinearInEasing 开头极快、瞬间掉一大半，
+                // 时长压到 60ms（用户反馈变暗仍偏慢，再缩短一半），消除“按下后隔一拍才暗”的延迟感；结尾线性收尾，无末段急停。
+                // 松手后 500ms 缓和淡回（淡入）保持 LinearOutSlowInEasing 不变。
+                val fabFadeOutSpec = tween<Float>(durationMillis = 60, easing = FastOutLinearInEasing)
+                val fabFadeInSpec = tween<Float>(durationMillis = 500, easing = LinearOutSlowInEasing)
+                val fabAlpha by animateFloatAsState(
+                    targetValue = fabAlphaTarget.value,
+                    animationSpec = if (fabAlphaTarget.value < 1f) fabFadeOutSpec else fabFadeInSpec,
+                    label = "forumFabAlpha"
+                )
+                LaunchedEffect(Unit) {
+                    while (true) {
+                        delay(200)
+                        if (fabScrolling.value && !fabPressing.value &&
+                            System.currentTimeMillis() - fabScrollTime.value > 500
+                        ) {
+                            fabScrolling.value = false
+                            fabAlphaTarget.value =
+                                if (fabPressing.value || fabScrolling.value) 0.22f else 1f
+                        }
                     }
                 }
 
@@ -758,6 +730,13 @@ fun ForumPage(
                                 available: Offset,
                                 source: NestedScrollSource,
                             ): Offset {
+                                // 页面内容滚动(任意方向)时标记 FAB 淡出；头图折叠仍由下方处理
+                                if (available.y != 0f) {
+                                    fabScrolling.value = true
+                                    fabScrollTime.value = System.currentTimeMillis()
+                                    fabAlphaTarget.value =
+                                        if (fabPressing.value || fabScrolling.value) 0.22f else 1f
+                                }
                                 if (available.y < 0) {
                                     val prevHeightOffset = heightOffset
                                     heightOffset = max(heightOffset + available.y, -headerHeight)
@@ -793,6 +772,18 @@ fun ForumPage(
                         modifier = Modifier
                             .padding(contentPadding)
                             .nestedScroll(headerNestedScrollConnection)
+                            .pointerInput(Unit) {
+                                awaitPointerEventScope {
+                                    while (true) {
+                                        val event =
+                                            awaitPointerEvent(PointerEventPass.Initial)
+                                        fabPressing.value =
+                                            event.changes.any { it.pressed }
+                                        fabAlphaTarget.value =
+                                            if (fabPressing.value || fabScrolling.value) 0.22f else 1f
+                                    }
+                                }
+                            }
                     ) {
                         Column {
                             val containerHeight by remember {
@@ -1041,6 +1032,81 @@ fun ForumPage(
                                             }
                                         }
                                     }
+                                }
+                            }
+                        }
+                        // 荣耀 AI 随心握：右下角 FAB 按握持侧贴到对应底边角，并抬高远离系统栏，方便单手拇指
+                        if (context.appPreferences.forumFabFunction != "hide" || (context.appPreferences.hideReply == true && context.appPreferences.forumFabFunction == "post")) {
+                            val gripSide = LocalGripState.current
+                            val fabAlign = if (gripSide == GripStateHolder.GRIP_LEFT) Alignment.BottomStart else Alignment.BottomEnd
+                            Box(
+                                modifier = Modifier
+                                    .align(fabAlign)
+                                    .graphicsLayer { alpha = fabAlpha }
+                                    .navigationBarsPadding()
+                                    .padding(bottom = 76.dp, start = 16.dp, end = 16.dp)
+                            ) {
+                                FloatingActionButton(
+                                    onClick = {
+                                        when (context.appPreferences.forumFabFunction) {
+                                            "refresh" -> {
+                                                coroutineScope.launch {
+                                                    if (currentPage >= 2) {
+                                                        emitGlobalEvent(GeneralTabListUiEvent.BackToTop)
+                                                        emitGlobalEvent(GeneralTabListUiEvent.Refresh())
+                                                    } else {
+                                                        emitGlobalEventSuspend(
+                                                            ForumThreadListUiEvent.BackToTop(
+                                                                currentPage == 1
+                                                            )
+                                                        )
+                                                        emitGlobalEventSuspend(
+                                                            ForumThreadListUiEvent.Refresh(
+                                                                currentPage == 1,
+                                                                getSortType(
+                                                                    context,
+                                                                    forumName
+                                                                )
+                                                            )
+                                                        )
+                                                    }
+                                                }
+                                            }
+
+                                            "back_to_top" -> {
+                                                coroutineScope.launch {
+                                                    if (currentPage >= 2) {
+                                                        emitGlobalEvent(GeneralTabListUiEvent.BackToTop)
+                                                    } else {
+                                                        emitGlobalEvent(
+                                                            ForumThreadListUiEvent.BackToTop(
+                                                                currentPage == 1
+                                                            )
+                                                        )
+                                                    }
+                                                }
+                                            }
+
+                                            else -> {
+                                                coroutineScope.launch {
+                                                    emitGlobalEvent(
+                                                        ForumThreadListUiEvent.AddThread(forumName)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    },
+                                    backgroundColor = ExtendedTheme.colors.windowBackground,
+                                    contentColor = ExtendedTheme.colors.primary,
+                                ) {
+                                    Icon(
+                                        imageVector = when (context.appPreferences.forumFabFunction) {
+                                            "refresh" -> Icons.Rounded.Refresh
+                                            "back_to_top" -> Icons.Rounded.VerticalAlignTop
+                                            else -> Icons.Rounded.Add
+                                        },
+                                        contentDescription = null
+                                    )
                                 }
                             }
                         }

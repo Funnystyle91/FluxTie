@@ -93,8 +93,8 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.math.sign
 
-/** 外壳高度：64dp 全胶囊。 */
-private val DockShellHeight = 64.dp
+/** 外壳高度：52dp 全胶囊（ previously 64dp，握持模式下更矮更和谐）。 */
+private val DockShellHeight = 52.dp
 
 /** 外壳水平外边距。 */
 private val DockHorizontalMargin = 16.dp
@@ -105,14 +105,17 @@ private val DockBottomMargin = 12.dp
 /** 外壳内左右留白：首末槽位不贴胶囊边缘。 */
 private val DockInnerHorizontalPadding = 8.dp
 
-/** 静止指示器高度：壳高 64dp 上下各留 4dp（= 壳高 × 4/64）。 */
-private val DockIndicatorRestHeight = 56.dp
+/** 条目图标尺寸。 */
+private val DockIconSize = 20.dp
 
-/** 按下 bloom 目标高度 78dp（≈1.39×）。 */
-private const val DockIndicatorPressScale = 78f / 56f
+/** 静止指示器高度：壳高 52dp 上下各留 4dp（= 壳高 × 4/52）。 */
+private val DockIndicatorRestHeight = 44.dp
 
-/** 按下时壳整体放大的宽度量（64dp 壳基准 16dp，按壳宽比例缩放）。 */
-private val DockPressBloomDp = 16.dp
+/** 按下 bloom 目标高度 64dp（≈1.45×）。 */
+private const val DockIndicatorPressScale = 64f / 44f
+
+/** 按下时壳整体放大的宽度量（52dp 壳基准 12dp，按壳宽比例缩放）。 */
+private val DockPressBloomDp = 12.dp
 
 /** 按下时条目内容放大比例（1 + 0.2）。 */
 private const val DockTabPressScaleExtra = 0.2f
@@ -714,7 +717,7 @@ private fun DockItem(
                 contentDescription = title,
                 tint = color,
                 modifier = Modifier
-                    .size(24.dp)
+                    .size(DockIconSize)
                     .graphicsLayer {
                         scaleX = iconScale.value
                         scaleY = iconScale.value

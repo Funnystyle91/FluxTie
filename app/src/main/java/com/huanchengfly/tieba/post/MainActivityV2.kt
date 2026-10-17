@@ -56,6 +56,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -125,6 +126,7 @@ import com.huanchengfly.tieba.post.utils.newIntentFilter
 import com.huanchengfly.tieba.post.utils.registerPickMediasLauncher
 import com.huanchengfly.tieba.post.utils.requestIgnoreBatteryOptimizations
 import com.huanchengfly.tieba.post.utils.requestPermission
+import com.huanchengfly.tieba.post.utils.GripStateHolder
 import com.ramcosta.composedestinations.DestinationsNavHost
 import com.ramcosta.composedestinations.animations.defaults.RootNavGraphDefaultAnimations
 import com.ramcosta.composedestinations.animations.rememberAnimatedNavHostEngine
@@ -159,6 +161,9 @@ val LocalNavController =
     staticCompositionLocalOf<NavHostController> { throw IllegalStateException("not allowed here!") }
 val LocalDestination = compositionLocalOf<DestinationSpec<*>?> { null }
 
+val LocalGripState =
+    staticCompositionLocalOf<Int> { GripStateHolder.GRIP_UNKNOWN }
+
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun rememberBottomSheetNavigator(
@@ -177,6 +182,10 @@ fun rememberBottomSheetNavigator(
 class MainActivityV2 : BaseComposeActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private val newMessageReceiver: BroadcastReceiver = NewMessageReceiver()
+
+    // 荣耀 AI 随心握：把官方握持状态桥接到 Compose（snapshot state，变化即触发重组）
+    private val gripState = mutableStateOf(GripStateHolder.GRIP_UNKNOWN)
+    private val gripObserver: (Int) -> Unit = { gripState.value = it }
 
     @Inject
     lateinit var updateManager: UpdateManager
@@ -365,13 +374,16 @@ class MainActivityV2 : BaseComposeActivity() {
         splashScreen.setOnExitAnimationListener { splashScreenViewProvider ->
             splashScreenViewProvider.view.animate()
                 .alpha(0f)
-                .setDuration(240L)
+                .setDuration(100L)
                 .withEndAction {
                     splashScreenViewProvider.remove()
                 }
                 .start()
         }
         super.onCreate(savedInstanceState)
+        // 荣耀 AI 随心握：查询设备支持状态并构建官方监听器（仅一次），随后注册观察者把状态桥接给 Compose
+        GripStateHolder.firstInit(this)
+        GripStateHolder.addObserver(gripObserver)
         window.decorView.setBackgroundColor(0)
         window.setBackgroundDrawable(ColorDrawable(0))
         launch {
@@ -390,6 +402,23 @@ class MainActivityV2 : BaseComposeActivity() {
             // 启动静默检查更新（内部等启动屏结束；开关关闭时不打扰）
             updateManager.autoCheckIfNeeded()
         }
+    }
+
+    // 荣耀 AI 随心握：跟随生命周期注册/解注册官方监听器
+    // （onResume 注册可补推当前握持状态，解决首开/切回前台不跟手）
+    override fun onResume() {
+        super.onResume()
+        GripStateHolder.register(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        GripStateHolder.unregister(this)
+    }
+
+    override fun onDestroy() {
+        GripStateHolder.removeObserver(gripObserver)
+        super.onDestroy()
     }
 
     override fun onCreateContent(systemUiController: SystemUIBarsTweaker) {
@@ -623,6 +652,7 @@ class MainActivityV2 : BaseComposeActivity() {
         CompositionLocalProvider(
             LocalNotificationCountFlow provides notificationCountFlow,
             LocalDevicePosture provides devicePostureFlow.collectAsState(),
+            LocalGripState provides gripState.value,
         ) {
             content()
         }

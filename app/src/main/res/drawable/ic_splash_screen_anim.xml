@@ -67,27 +67,27 @@
             <group android:name="time_marker" />
         </vector>
     </aapt:attr>
-    
-    <!-- 1. Rear Card Elastic Rise & Isotropic Scale (0ms - 420ms) -->
+
+    <!-- 1. Rear Card Elastic Rise & Isotropic Scale (0ms - 200ms) -->
     <target android:name="rear_group">
         <aapt:attr name="android:animation">
             <set android:ordering="together">
                 <objectAnimator
-                    android:duration="420"
+                    android:duration="200"
                     android:interpolator="@android:interpolator/fast_out_slow_in"
                     android:propertyName="scaleX"
                     android:valueFrom="0.75"
                     android:valueTo="1.0"
                     android:valueType="floatType" />
                 <objectAnimator
-                    android:duration="420"
+                    android:duration="200"
                     android:interpolator="@android:interpolator/fast_out_slow_in"
                     android:propertyName="scaleY"
                     android:valueFrom="0.75"
                     android:valueTo="1.0"
                     android:valueType="floatType" />
                 <objectAnimator
-                    android:duration="420"
+                    android:duration="200"
                     android:interpolator="@android:interpolator/fast_out_slow_in"
                     android:propertyName="translateY"
                     android:valueFrom="10.0"
@@ -100,7 +100,7 @@
         <aapt:attr name="android:animation">
             <set android:ordering="together">
                 <objectAnimator
-                    android:duration="180"
+                    android:duration="100"
                     android:interpolator="@android:interpolator/linear"
                     android:propertyName="fillAlpha"
                     android:valueFrom="0.0"
@@ -109,70 +109,52 @@
             </set>
         </aapt:attr>
     </target>
-    
-    <!-- 2. Front Bubble Elastic Pop & Settle Tilt (60ms - 920ms) -->
+
+    <!-- 2. Front Bubble Elastic Pop (30ms - 280ms) — 仅保留入场前半段，去掉尾部小倾斜摆动 -->
     <target android:name="front_group">
         <aapt:attr name="android:animation">
             <set android:ordering="together">
                 <!-- Elastic Scale Entrance -->
                 <objectAnimator
-                    android:startOffset="60"
-                    android:duration="320"
+                    android:startOffset="30"
+                    android:duration="160"
                     android:interpolator="@android:interpolator/fast_out_slow_in"
                     android:propertyName="scaleX"
                     android:valueFrom="0.65"
                     android:valueTo="1.05"
                     android:valueType="floatType" />
                 <objectAnimator
-                    android:startOffset="380"
-                    android:duration="140"
+                    android:startOffset="190"
+                    android:duration="80"
                     android:interpolator="@android:interpolator/fast_out_slow_in"
                     android:propertyName="scaleX"
                     android:valueFrom="1.05"
                     android:valueTo="1.0"
                     android:valueType="floatType" />
                 <objectAnimator
-                    android:startOffset="60"
-                    android:duration="320"
+                    android:startOffset="30"
+                    android:duration="160"
                     android:interpolator="@android:interpolator/fast_out_slow_in"
                     android:propertyName="scaleY"
                     android:valueFrom="0.65"
                     android:valueTo="1.05"
                     android:valueType="floatType" />
                 <objectAnimator
-                    android:startOffset="380"
-                    android:duration="140"
+                    android:startOffset="190"
+                    android:duration="80"
                     android:interpolator="@android:interpolator/fast_out_slow_in"
                     android:propertyName="scaleY"
                     android:valueFrom="1.05"
                     android:valueTo="1.0"
                     android:valueType="floatType" />
-                    
+
                 <!-- Translate Y Float Up -->
                 <objectAnimator
-                    android:startOffset="60"
-                    android:duration="400"
+                    android:startOffset="30"
+                    android:duration="200"
                     android:interpolator="@android:interpolator/fast_out_slow_in"
                     android:propertyName="translateY"
                     android:valueFrom="12.0"
-                    android:valueTo="0.0"
-                    android:valueType="floatType" />
-                    
-                <!-- Expressive Micro-Tilt (560ms - 880ms) -->
-                <objectAnimator
-                    android:startOffset="560"
-                    android:duration="160"
-                    android:interpolator="@android:interpolator/fast_out_slow_in"
-                    android:propertyName="rotation"
-                    android:valueFrom="0.0"
-                    android:valueTo="-2.5"
-                    android:valueType="floatType" />
-                <objectAnimator
-                    android:startOffset="720"
-                    android:duration="160"
-                    android:interpolator="@android:interpolator/fast_out_slow_in"
-                    android:propertyName="rotation"
-                    android:valueFrom="-2.5"
                     android:valueTo="0.0"
                     android:valueType="floatType" />
             </set>
@@ -182,8 +164,8 @@
         <aapt:attr name="android:animation">
             <set android:ordering="together">
                 <objectAnimator
-                    android:startOffset="60"
-                    android:duration="180"
+                    android:startOffset="30"
+                    android:duration="100"
                     android:interpolator="@android:interpolator/linear"
                     android:propertyName="fillAlpha"
                     android:valueFrom="0.0"
@@ -192,22 +174,22 @@
             </set>
         </aapt:attr>
     </target>
-    
+
     <!-- 3. Top Post Bar Isotropic Scale (Preserves Rounded Capsule Corners) -->
     <target android:name="top_bar_group">
         <aapt:attr name="android:animation">
             <set android:ordering="together">
                 <objectAnimator
-                    android:startOffset="260"
-                    android:duration="240"
+                    android:startOffset="130"
+                    android:duration="120"
                     android:interpolator="@android:interpolator/fast_out_slow_in"
                     android:propertyName="scaleX"
                     android:valueFrom="0.5"
                     android:valueTo="1.0"
                     android:valueType="floatType" />
                 <objectAnimator
-                    android:startOffset="260"
-                    android:duration="240"
+                    android:startOffset="130"
+                    android:duration="120"
                     android:interpolator="@android:interpolator/fast_out_slow_in"
                     android:propertyName="scaleY"
                     android:valueFrom="0.5"
@@ -220,8 +202,8 @@
         <aapt:attr name="android:animation">
             <set android:ordering="together">
                 <objectAnimator
-                    android:startOffset="260"
-                    android:duration="140"
+                    android:startOffset="130"
+                    android:duration="80"
                     android:interpolator="@android:interpolator/linear"
                     android:propertyName="fillAlpha"
                     android:valueFrom="0.0"
@@ -230,22 +212,22 @@
             </set>
         </aapt:attr>
     </target>
-    
+
     <!-- 4. Bottom Post Bar Isotropic Scale (Preserves Rounded Capsule Corners) -->
     <target android:name="bot_bar_group">
         <aapt:attr name="android:animation">
             <set android:ordering="together">
                 <objectAnimator
-                    android:startOffset="340"
-                    android:duration="240"
+                    android:startOffset="170"
+                    android:duration="120"
                     android:interpolator="@android:interpolator/fast_out_slow_in"
                     android:propertyName="scaleX"
                     android:valueFrom="0.5"
                     android:valueTo="1.0"
                     android:valueType="floatType" />
                 <objectAnimator
-                    android:startOffset="340"
-                    android:duration="240"
+                    android:startOffset="170"
+                    android:duration="120"
                     android:interpolator="@android:interpolator/fast_out_slow_in"
                     android:propertyName="scaleY"
                     android:valueFrom="0.5"
@@ -258,8 +240,8 @@
         <aapt:attr name="android:animation">
             <set android:ordering="together">
                 <objectAnimator
-                    android:startOffset="340"
-                    android:duration="140"
+                    android:startOffset="170"
+                    android:duration="80"
                     android:interpolator="@android:interpolator/linear"
                     android:propertyName="fillAlpha"
                     android:valueFrom="0.0"
@@ -268,13 +250,13 @@
             </set>
         </aapt:attr>
     </target>
-    
-    <!-- 5. Total Timing Sentinel (1000ms duration) -->
+
+    <!-- 5. Total Timing Sentinel (330ms duration) -->
     <target android:name="time_marker">
         <aapt:attr name="android:animation">
             <set android:ordering="together">
                 <objectAnimator
-                    android:duration="1000"
+                    android:duration="330"
                     android:propertyName="translateX"
                     android:valueFrom="0.0"
                     android:valueTo="1.0"
