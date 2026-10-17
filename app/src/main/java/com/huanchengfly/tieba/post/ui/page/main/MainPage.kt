@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -70,6 +71,8 @@ import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
 import com.huanchengfly.tieba.post.ui.widgets.compose.SplashState
 import com.huanchengfly.tieba.post.ui.widgets.compose.supportsBackdropBlur
 import com.huanchengfly.tieba.post.utils.appPreferences
+import com.huanchengfly.tieba.post.LocalGripState
+import com.huanchengfly.tieba.post.utils.GripStateHolder
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootNavGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -90,23 +93,19 @@ private fun NavigationWrapper(
     navigationContentPosition: MainNavigationContentPosition,
     content: @Composable () -> Unit,
 ) {
+    // 荣耀 AI 随心握：右手握持时把侧栏（Rail / 永久抽屉）挪到右侧，方便拇指操作；
+    // 左手或未知握持时留在左侧（默认）。底栏（悬浮胶囊 / 经典栏）在 MainPage 中按握持侧缩小贴边。
+    val gripSide = LocalGripState.current
+    val sideOnRight = gripSide == GripStateHolder.GRIP_RIGHT
     Row(modifier = Modifier.fillMaxSize()) {
-        AnimatedVisibility(visible = navigationType == MainNavigationType.PERMANENT_NAVIGATION_DRAWER) {
-            NavigationDrawerContent(
+        if (!sideOnRight) {
+            SideNavigation(
+                navigationType = navigationType,
                 currentPosition = currentPosition,
                 onChangePosition = onChangePosition,
                 onReselected = onReselected,
                 navigationItems = navigationItems,
-                navigationContentPosition = navigationContentPosition
-            )
-        }
-        AnimatedVisibility(visible = navigationType == MainNavigationType.NAVIGATION_RAIL) {
-            NavigationRail(
-                currentPosition = currentPosition,
-                onChangePosition = onChangePosition,
-                onReselected = onReselected,
-                navigationItems = navigationItems,
-                navigationContentPosition = navigationContentPosition
+                navigationContentPosition = navigationContentPosition,
             )
         }
         Column(
@@ -116,6 +115,45 @@ private fun NavigationWrapper(
         ) {
             content()
         }
+        if (sideOnRight) {
+            SideNavigation(
+                navigationType = navigationType,
+                currentPosition = currentPosition,
+                onChangePosition = onChangePosition,
+                onReselected = onReselected,
+                navigationItems = navigationItems,
+                navigationContentPosition = navigationContentPosition,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SideNavigation(
+    navigationType: MainNavigationType,
+    currentPosition: Int,
+    onChangePosition: (position: Int) -> Unit,
+    onReselected: (position: Int) -> Unit,
+    navigationItems: ImmutableList<NavigationItem>,
+    navigationContentPosition: MainNavigationContentPosition,
+) {
+    AnimatedVisibility(visible = navigationType == MainNavigationType.PERMANENT_NAVIGATION_DRAWER) {
+        NavigationDrawerContent(
+            currentPosition = currentPosition,
+            onChangePosition = onChangePosition,
+            onReselected = onReselected,
+            navigationItems = navigationItems,
+            navigationContentPosition = navigationContentPosition
+        )
+    }
+    AnimatedVisibility(visible = navigationType == MainNavigationType.NAVIGATION_RAIL) {
+        NavigationRail(
+            currentPosition = currentPosition,
+            onChangePosition = onChangePosition,
+            onReselected = onReselected,
+            navigationItems = navigationItems,
+            navigationContentPosition = navigationContentPosition
+        )
     }
 }
 
@@ -302,6 +340,18 @@ fun MainPage(
     val saveableStateHolder = rememberSaveableStateHolder()
     // 真悬浮布局:胶囊叠于内容之上,内容 edge-to-edge;经典贴底/Rail 模式沿用 Scaffold 避让
     val floatingLayout = navigationType == MainNavigationType.BOTTOM_NAVIGATION && floatingBottomNav
+    // 荣耀 AI 随心握：侧栏（Rail / 永久抽屉）按握持侧换边由 NavigationWrapper 处理；
+    // 固定底栏（经典 BottomNavigation）保持原版整条居中不动；
+    // 悬浮底栏（FloatingDock）在检测到握持时缩小并贴向该侧，方便单手拇指够到。
+    val gripSide = LocalGripState.current
+    val gripShrink = gripSide != GripStateHolder.GRIP_UNKNOWN
+    val gripDockAlign = when (gripSide) {
+        GripStateHolder.GRIP_LEFT -> Alignment.BottomStart
+        GripStateHolder.GRIP_RIGHT -> Alignment.BottomEnd
+        else -> Alignment.BottomCenter
+    }
+    // 握持时悬浮底栏宽度收缩比例（0.78：在"贴边够得到"与"不会太窄"之间取平衡，较上一版再收窄）
+    val gripDockWidthFraction = if (gripShrink) 0.78f else 1f
     // M2 Scaffold 不做系统 insets 避让(contentWindowInsets 传的是全 0),悬浮模式下底部
     // 导航栏区域需在此统一补足:呼吸位 = 胶囊高 + 底边距 + 呼吸(84dp) + 系统导航栏,
     // 列表末项才能完整滚出胶囊,加载提示胶囊也停在这条线上。
@@ -362,7 +412,11 @@ fun MainPage(
                             }
                         }
                         if (floatingLayout) {
-                            Box(modifier = Modifier.align(Alignment.BottomCenter)) {
+                            Box(
+                                modifier = Modifier
+                                    .align(gripDockAlign)
+                                    .fillMaxWidth(gripDockWidthFraction)
+                            ) {
                                 FloatingDock(
                                     currentPosition = currentPosition,
                                     onChangePosition = onChangePosition,

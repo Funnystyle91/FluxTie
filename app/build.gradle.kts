@@ -63,7 +63,8 @@ android {
     compileSdk = 37
     defaultConfig {
         applicationId = "com.makise.fluxtie"
-        minSdk = 23
+        // SmartGrip SDK (smartgripkit.aar) 声明 minSdk 24，故提升到 24 以消除 manifest merger 冲突
+        minSdk = 24
         //noinspection OldTargetApi
         targetSdk = 37
         versionCode = applicationVersionCode
@@ -286,4 +287,8 @@ dependencies {
     //ksp(libs.com.jakewharton.butterknife.compiler)
 
     // ksp(libs.kotlin.metadata.jvm)
+
+    // 荣耀 AI 随心握（SmartGrip）：本地内置 AAR（app/libs），避免 GitHub Actions 拉不到
+    // developer.hihonor.com 国内仓库导致依赖解析失败；非荣耀设备自动跳过、零副作用。
+    implementation(files("libs/smartgripkit.aar"))
 }

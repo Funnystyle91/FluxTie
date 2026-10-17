@@ -92,11 +92,11 @@ private val SplashFontFamily = FontFamily(
 )
 
 /**
- * 应用内启动屏（一镜到底流体编排）：
- * 1. 初始阶段（0~420ms）：Logo 严格处于屏幕物理中心（160dp 满态），零偏差承接系统启动屏动效。
- * 2. 一镜到底升维（420~1000ms）：Logo 平滑上浮（0dp -> -96dp）并等比缩放（160dp -> 96dp），成为 Loading 加载页的头部图标。
- * 3. 内容梯次随动（540~1000ms）：随着 Logo 腾出空间，标语（见闻生活新知）、FluxTie 应用名与液态 Blob Loading 顺势跟进滑入展现。
- * 4. 退场交接：首页数据就绪后，整体品牌面板轻柔向上浮升淡出，底栏与 Feed 流迎面浮现。
+ * 应用内启动屏（一镜到底流体编排，速度优先，已大幅压缩）：
+ * 1. 初始阶段（0~30ms）：Logo 严格处于屏幕物理中心（160dp 满态），零偏差承接系统启动屏动效。
+ * 2. 一镜到底升维（30~230ms）：Logo 平滑上浮（-120dp）并等比缩放（0.55），成为 Loading 加载页的头部图标。
+ * 3. 内容梯次随动（70~300ms）：随着 Logo 腾出空间，标语、FluxTie 应用名与液态 Blob Loading 顺势跟进滑入展现。
+ * 4. 退场交接：首页数据就绪且满足最短展示（220ms）后整体淡出；0.8s 超时兜底。
  */
 @Composable
 fun AppSplashOverlay() {
@@ -106,60 +106,60 @@ fun AppSplashOverlay() {
     // 1. 一镜到底核心动效：Logo 充分向上浮升（-120dp）并在空间上等比缩放至 88dp 精致头部徽标
     val logoTranslateY by animateDpAsState(
         targetValue = if (isHeaderStage) (-120).dp else 0.dp,
-        animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
         label = "logoTranslateY"
     )
     val logoScale by animateFloatAsState(
         targetValue = if (isHeaderStage) 0.55f else 1.0f,
-        animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
         label = "logoScale"
     )
 
     // 2. 标语、应用名与 Loading 随动滑入与淡入
     val contentRevealAlpha by animateFloatAsState(
         targetValue = if (isHeaderStage) 1.0f else 0.0f,
-        animationSpec = tween(durationMillis = 440, delayMillis = 140, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 180, delayMillis = 40, easing = FastOutSlowInEasing),
         label = "contentRevealAlpha"
     )
     val contentRevealSlide by animateDpAsState(
         targetValue = if (isHeaderStage) 0.dp else 24.dp,
-        animationSpec = tween(durationMillis = 480, delayMillis = 140, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 200, delayMillis = 40, easing = FastOutSlowInEasing),
         label = "contentRevealSlide"
     )
 
     // 3. 整体退场过渡（开门交接）
     val transition = updateTransition(targetState = visible, label = "splashExit")
     val bgAlpha by transition.animateFloat(
-        transitionSpec = { tween(durationMillis = 300, easing = LinearEasing) },
+        transitionSpec = { tween(durationMillis = 120, easing = LinearEasing) },
         label = "splashBgAlpha"
     ) { if (it) 1f else 0f }
     val exitAlpha by transition.animateFloat(
-        transitionSpec = { tween(durationMillis = 220, easing = EaseInCubic) },
+        transitionSpec = { tween(durationMillis = 100, easing = EaseInCubic) },
         label = "splashExitAlpha"
     ) { if (it) 1f else 0f }
     val exitScale by transition.animateFloat(
-        transitionSpec = { tween(durationMillis = 260, easing = FastOutSlowInEasing) },
+        transitionSpec = { tween(durationMillis = 130, easing = FastOutSlowInEasing) },
         label = "splashExitScale"
     ) { if (it) 1f else 0.96f }
     val exitTranslateY by transition.animateDp(
-        transitionSpec = { tween(durationMillis = 260, easing = FastOutSlowInEasing) },
+        transitionSpec = { tween(durationMillis = 130, easing = FastOutSlowInEasing) },
         label = "splashExitTranslateY"
     ) { if (it) 0.dp else (-18).dp }
 
     LaunchedEffect(Unit) {
         SplashState.reset()
         val start = System.currentTimeMillis()
-        // 约 420ms 后无缝承接系统启动屏动效终态，启动一镜到底上浮
-        delay(420)
+        // 尽快承接系统启动屏，缩短启动等待
+        delay(30)
         isHeaderStage = true
 
-        // 循环播放直到：加载完成且达到最短展示时长（1500ms 保证一镜到底完整呈现）；3.5s 超时兜底
-        val minDuration = 1500L
-        val timeout = 3500L
+        // 循环播放直到：加载完成且达到最短展示时长（220ms 快速过渡）；0.8s 超时兜底
+        val minDuration = 220L
+        val timeout = 800L
         while (true) {
             val elapsed = System.currentTimeMillis() - start
             if ((SplashState.ready.value && elapsed >= minDuration) || elapsed >= timeout) break
-            delay(100)
+            delay(50)
         }
         visible = false
         SplashState.finished.value = true
