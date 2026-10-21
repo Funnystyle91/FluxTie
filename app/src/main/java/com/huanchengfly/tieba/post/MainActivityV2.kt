@@ -70,6 +70,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.plusAssign
@@ -579,10 +580,26 @@ class MainActivityV2 : BaseComposeActivity() {
                 if (!predictiveBack) {
                     val backDispatcher = LocalOnBackPressedDispatcherOwner.current
                     val backCallback = remember(navController) {
-                        object : OnBackPressedCallback(true) {
+                        object : OnBackPressedCallback(
+                            navController.currentBackStack.value.size > 1
+                        ) {
                             override fun handleOnBackPressed() {
                                 navController.navigateUp()
                             }
+                        }
+                    }
+                    // 仅在存在可弹出的导航目标时拦截返回;处于根页面(主页面)时禁用,
+                    // 让返回事件回退到 Activity 默认行为(退出 / 回到桌面)
+                    DisposableEffect(navController) {
+                        val destinationListener =
+                            NavController.OnDestinationChangedListener { controller, _, _ ->
+                                backCallback.isEnabled =
+                                    controller.currentBackStack.value.size > 1
+                            }
+                        navController.addOnDestinationChangedListener(destinationListener)
+                        backCallback.isEnabled = navController.currentBackStack.value.size > 1
+                        onDispose {
+                            navController.removeOnDestinationChangedListener(destinationListener)
                         }
                     }
                     DisposableEffect(backDispatcher) {
