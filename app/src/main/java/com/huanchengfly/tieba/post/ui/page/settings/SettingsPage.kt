@@ -56,11 +56,11 @@ import com.huanchengfly.tieba.post.ui.page.destinations.HabitSettingsPageDestina
 import com.huanchengfly.tieba.post.ui.page.destinations.LoginPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.MemeEmoticonPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.OKSignSettingsPageDestination
-import com.huanchengfly.tieba.post.ui.page.settings.custom.AppearanceCard
-import com.huanchengfly.tieba.post.ui.page.settings.custom.CardDivider
-import com.huanchengfly.tieba.post.ui.page.settings.custom.SectionLabel
-import com.huanchengfly.tieba.post.ui.page.settings.custom.SettingRow
-import com.huanchengfly.tieba.post.ui.page.settings.custom.SwitchSettingRow
+import com.huanchengfly.tieba.post.ui.page.settings.components.AppearanceCard
+import com.huanchengfly.tieba.post.ui.page.settings.components.CardDivider
+import com.huanchengfly.tieba.post.ui.page.settings.components.SectionLabel
+import com.huanchengfly.tieba.post.ui.page.settings.components.SettingRow
+import com.huanchengfly.tieba.post.ui.page.settings.components.SwitchSettingRow
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
 import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
 import com.huanchengfly.tieba.post.ui.widgets.compose.LocalSnackbarHostState
@@ -88,9 +88,8 @@ internal fun LeadingIcon(
 }
 
 /**
- * 设置主页：按用途分为「账号 / 通用 / 浏览 / 存储 / 系统」五组。
- * 原先收纳在「更多-其他杂项」子页的条目已按性质归入对应分组，
- * 与「我的」页重复的「关于」入口不再保留。
+ * 设置主页：按功能域分为「账号 / 个性化 / 内容与浏览 / 功能 / 通用」五组
+ * （参考 FlClash 的功能域分组）。
  */
 @Destination
 @Composable
@@ -146,9 +145,9 @@ fun SettingsPage(
                     }
                 }
 
-                // ── 通用
+                // ── 个性化
                 item {
-                    SectionLabel(text = stringResource(id = R.string.title_settings_group_general))
+                    SectionLabel(text = stringResource(id = R.string.title_settings_group_personal))
                 }
                 item {
                     AppearanceCard {
@@ -157,20 +156,6 @@ fun SettingsPage(
                             title = stringResource(id = R.string.title_settings_custom),
                             summary = stringResource(id = R.string.summary_settings_custom),
                             onClick = { navigator.navigate(CustomSettingsPageDestination) }
-                        )
-                        CardDivider()
-                        SettingRow(
-                            icon = ImageVector.vectorResource(id = R.drawable.ic_settings_block),
-                            title = stringResource(id = R.string.title_block_settings),
-                            summary = stringResource(id = R.string.summary_block_settings),
-                            onClick = { navigator.navigate(BlockSettingsPageDestination) }
-                        )
-                        CardDivider()
-                        SettingRow(
-                            icon = ImageVector.vectorResource(id = R.drawable.ic_rocket_launch_black_24),
-                            title = stringResource(id = R.string.title_oksign),
-                            summary = stringResource(id = R.string.summary_settings_oksign),
-                            onClick = { navigator.navigate(OKSignSettingsPageDestination) }
                         )
                         CardDivider()
                         SettingRow(
@@ -189,12 +174,19 @@ fun SettingsPage(
                     }
                 }
 
-                // ── 浏览
+                // ── 内容与浏览
                 item {
-                    SectionLabel(text = stringResource(id = R.string.title_settings_group_browsing))
+                    SectionLabel(text = stringResource(id = R.string.title_settings_group_content))
                 }
                 item {
                     AppearanceCard {
+                        SettingRow(
+                            icon = ImageVector.vectorResource(id = R.drawable.ic_settings_block),
+                            title = stringResource(id = R.string.title_block_settings),
+                            summary = stringResource(id = R.string.summary_block_settings),
+                            onClick = { navigator.navigate(BlockSettingsPageDestination) }
+                        )
+                        CardDivider()
                         SwitchSettingRow(
                             icon = ImageVector.vectorResource(id = R.drawable.ic_chrome),
                             title = stringResource(id = R.string.title_use_webview),
@@ -216,9 +208,24 @@ fun SettingsPage(
                     }
                 }
 
-                // ── 存储
+                // ── 功能
                 item {
-                    SectionLabel(text = stringResource(id = R.string.title_settings_group_storage))
+                    SectionLabel(text = stringResource(id = R.string.title_settings_group_feature))
+                }
+                item {
+                    AppearanceCard {
+                        SettingRow(
+                            icon = ImageVector.vectorResource(id = R.drawable.ic_rocket_launch_black_24),
+                            title = stringResource(id = R.string.title_oksign),
+                            summary = stringResource(id = R.string.summary_settings_oksign),
+                            onClick = { navigator.navigate(OKSignSettingsPageDestination) }
+                        )
+                    }
+                }
+
+                // ── 通用
+                item {
+                    SectionLabel(text = stringResource(id = R.string.title_settings_group_general))
                 }
                 item {
                     AppearanceCard {
@@ -238,15 +245,7 @@ fun SettingsPage(
                                 }
                             }
                         )
-                    }
-                }
-
-                // ── 系统
-                item {
-                    SectionLabel(text = stringResource(id = R.string.title_settings_group_system))
-                }
-                item {
-                    AppearanceCard {
+                        CardDivider()
                         SettingRow(
                             icon = ImageVector.vectorResource(id = R.drawable.ic_link),
                             title = stringResource(id = R.string.title_open_by_default),

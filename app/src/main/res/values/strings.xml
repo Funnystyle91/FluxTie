@@ -654,4 +654,27 @@
     <string name="tip_meme_empty">还没有表情，可在图片浏览页添加</string>
     <string name="toast_add_meme_success">已添加到表情包</string>
     <string name="toast_add_meme_failed">添加失败：%s</string>
+
+    <!-- 主题色彩自定义 -->
+    <string name="title_seed_follow_system">跟随系统</string>
+    <string name="title_custom_seed_color">自定义颜色</string>
+    <string name="label_color_hue">色相</string>
+    <string name="label_color_chroma">彩度</string>
+    <string name="label_color_tone">明度</string>
+    <string name="desc_add_custom_color">添加自定义颜色</string>
+    <string name="desc_delete_custom_color">长按可删除</string>
+    <string name="summary_not_set">未设置</string>
+
+    <!-- 设置页分组 -->
+    <string name="title_settings_group_personal">个性化</string>
+    <string name="title_settings_group_content">内容与浏览</string>
+    <string name="title_settings_group_feature">功能</string>
+    <string name="title_habit_group_image">图片与媒体</string>
+    <string name="title_habit_group_browse">浏览与导航</string>
+    <string name="title_habit_group_collect">收藏</string>
+    <string name="title_habit_group_privacy">隐私与互动</string>
+    <string name="title_oksign_group_sign">签到行为</string>
+    <string name="title_oksign_group_background">后台运行</string>
+    <string name="title_account_group_manage">账号操作</string>
+    <string name="title_account_group_personal">个性化</string>
 </resources>

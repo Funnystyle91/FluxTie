@@ -13,7 +13,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,7 +26,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -45,16 +43,12 @@ import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.PhotoSizeSelectActual
 import androidx.compose.material.icons.rounded.Upcoming
 import androidx.compose.material.icons.rounded.ViewAgenda
-import androidx.compose.material.icons.outlined.Apps
-import androidx.compose.material.icons.outlined.ColorLens
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -63,12 +57,10 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.toColorInt
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.huanchengfly.tieba.post.App
@@ -76,42 +68,32 @@ import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamicColorScheme
 import com.huanchengfly.tieba.post.R
 import com.huanchengfly.tieba.post.activities.AppFontSizeActivity
-import com.huanchengfly.tieba.post.components.dialogs.CustomThemeDialog
+import com.huanchengfly.tieba.post.collectPreferenceAsState
 import com.huanchengfly.tieba.post.dataStore
 import com.huanchengfly.tieba.post.goToActivity
 import com.huanchengfly.tieba.post.rememberPreferenceAsMutableState
 import com.huanchengfly.tieba.post.rememberPreferenceAsState
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
+import com.huanchengfly.tieba.post.ui.page.settings.components.AppearanceCard
+import com.huanchengfly.tieba.post.ui.page.settings.components.CardDivider
+import com.huanchengfly.tieba.post.ui.page.settings.components.SectionLabel
+import com.huanchengfly.tieba.post.ui.page.settings.components.SettingRow
+import com.huanchengfly.tieba.post.ui.page.settings.components.SwitchSettingRow
+import com.huanchengfly.tieba.post.ui.page.settings.custom.components.ColorDotGrid
+import com.huanchengfly.tieba.post.ui.page.settings.custom.components.HctColorPickerDialog
 import com.huanchengfly.tieba.post.ui.widgets.compose.BackNavigationIcon
-import com.huanchengfly.tieba.post.ui.widgets.compose.Dialog
 import com.huanchengfly.tieba.post.ui.widgets.compose.MyScaffold
-import com.huanchengfly.tieba.post.ui.widgets.compose.Switch
 import com.huanchengfly.tieba.post.ui.widgets.compose.TitleCentredToolbar
 import com.huanchengfly.tieba.post.ui.widgets.compose.rememberDialogState
 import com.huanchengfly.tieba.post.utils.appPreferences
 import com.huanchengfly.tieba.post.utils.ThemeUtil
+import com.huanchengfly.tieba.post.utils.formatColorHex
+import com.huanchengfly.tieba.post.utils.parseColorHexOrNull
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 
-private val SwatchShape = RoundedCornerShape(14.dp)
-
-private fun parseSeedColor(hex: String): Color = runCatching {
-    Color(
-        if (hex.startsWith("0x", ignoreCase = true)) {
-            hex.substring(2).toLong(16).toInt()
-        } else {
-            hex.toColorInt()
-        }
-    )
-}.getOrDefault(Color(0xFF2196F3))
-
-private data class ThemeSwatch(
-    val id: String,
-    val name: String,
-    val fill: Color,
-    val dotColor: Color,
-    val stripeColor: Color,
-)
+private fun parseSeedColor(hex: String): Color =
+    Color(parseColorHexOrNull(hex) ?: 0xFF2196F3.toInt())
 
 private data class DarkStyleOption(
     val id: String,
@@ -149,35 +131,31 @@ fun CustomSettingsPage(
     )
     var useSeedTheme by rememberPreferenceAsMutableState(
         key = booleanPreferencesKey("use_seed_theme"),
-        defaultValue = false
+        defaultValue = true
     )
     var seedColorPref by rememberPreferenceAsMutableState(
         key = stringPreferencesKey("custom_primary_color"),
         defaultValue = "#FF2196F3"
     )
-    val appIconDialogState = rememberDialogState()
-    val customPrimaryColorDialogState = rememberDialogState()
-    var customPrimaryColor by remember {
-        mutableStateOf(
-            Color(
-                App.ThemeDelegate.getColorByAttr(
-                    context,
-                    R.attr.colorPrimary,
-                    ThemeUtil.THEME_CUSTOM
-                )
-            )
-        )
-    }
+    var customColorsRaw by rememberPreferenceAsMutableState(
+        key = stringPreferencesKey(KEY_CUSTOM_SEED_COLORS),
+        defaultValue = ""
+    )
+    val customColors = remember(customColorsRaw) { parseCustomSeedColors(customColorsRaw) }
+    // 「跟随系统」= Monet（与种子色互斥：选色卡/自定义色会关掉 dynamic）
+    val useDynamicColorTheme by context.dataStore.collectPreferenceAsState(
+        key = booleanPreferencesKey("useDynamicColorTheme"),
+        defaultValue = false
+    )
+    val dynamicSelected = useDynamicColorTheme && !useSeedTheme
 
     val currentIsNight = ThemeUtil.isNightMode()
     val oldTheme by rememberPreferenceAsState(
         key = stringPreferencesKey(ThemeUtil.KEY_OLD_THEME),
-        defaultValue = ThemeUtil.THEME_DEFAULT
+        defaultValue = ThemeUtil.THEME_CUSTOM
     )
     val lightPreviewTheme = if (currentIsNight) oldTheme else currentTheme
     val hapticFeedback = LocalHapticFeedback.current
-    val currentIsNightForPreview = ThemeUtil.isNightMode()
-    val customLabel = stringResource(id = R.string.title_theme_custom)
     val schemeStyleLabel = stringResource(id = R.string.title_scheme_style)
     val variantTonalSpot = stringResource(id = R.string.scheme_tonal_spot)
     val variantNeutral = stringResource(id = R.string.scheme_neutral)
@@ -188,20 +166,6 @@ fun CustomSettingsPage(
     val variantMonochrome = stringResource(id = R.string.scheme_monochrome)
     val variantRainbow = stringResource(id = R.string.scheme_rainbow)
     val variantFruitSalad = stringResource(id = R.string.scheme_fruit_salad)
-    val seedDefault = stringResource(id = R.string.seed_default)
-    val seedOcean = stringResource(id = R.string.seed_ocean)
-    val seedSakura = stringResource(id = R.string.seed_sakura)
-    val seedSpring = stringResource(id = R.string.seed_spring)
-    val seedAutumn = stringResource(id = R.string.seed_autumn)
-    val seedPurple = stringResource(id = R.string.seed_purple)
-    val seedGreen = stringResource(id = R.string.seed_green)
-    val seedOrange = stringResource(id = R.string.seed_orange)
-    val seedPink = stringResource(id = R.string.seed_pink)
-    val seedTeal = stringResource(id = R.string.seed_teal)
-    val seedRed = stringResource(id = R.string.seed_red)
-    val seedIndigo = stringResource(id = R.string.seed_indigo)
-    val seedAmber = stringResource(id = R.string.seed_amber)
-    val seedCyan = stringResource(id = R.string.seed_cyan)
 
     val schemeVariants = listOf(
         "TonalSpot", "Neutral", "Vibrant", "Expressive", "Fidelity",
@@ -218,89 +182,17 @@ fun CustomSettingsPage(
         "Rainbow" to variantRainbow,
         "FruitSalad" to variantFruitSalad,
     )
-    val seedPresets = listOf(
-        ThemeSwatch("0xFF2196F3", seedDefault, Color(0xFF2196F3), Color(0xFF2196F3), Color.White),
-        ThemeSwatch("0xFF116682", seedOcean, Color(0xFF116682), Color(0xFF116682), Color.White),
-        ThemeSwatch("0xFF8E4955", seedSakura, Color(0xFF8E4955), Color(0xFF8E4955), Color.White),
-        ThemeSwatch("0xFF4C662B", seedSpring, Color(0xFF4C662B), Color(0xFF4C662B), Color.White),
-        ThemeSwatch("0xFF735C0C", seedAutumn, Color(0xFF735C0C), Color(0xFF735C0C), Color.White),
-        ThemeSwatch("0xFF9C27B0", seedPurple, Color(0xFF9C27B0), Color(0xFF9C27B0), Color.White),
-        ThemeSwatch("0xFF4CAF50", seedGreen, Color(0xFF4CAF50), Color(0xFF4CAF50), Color.White),
-        ThemeSwatch("0xFFFF9800", seedOrange, Color(0xFFFF9800), Color(0xFFFF9800), Color.White),
-        ThemeSwatch("0xFFE91E63", seedPink, Color(0xFFE91E63), Color(0xFFE91E63), Color.White),
-        ThemeSwatch("0xFF009688", seedTeal, Color(0xFF009688), Color(0xFF009688), Color.White),
-        ThemeSwatch("0xFFF44336", seedRed, Color(0xFFF44336), Color(0xFFF44336), Color.White),
-        ThemeSwatch("0xFF3F51B5", seedIndigo, Color(0xFF3F51B5), Color(0xFF3F51B5), Color.White),
-        ThemeSwatch("0xFFFFC107", seedAmber, Color(0xFFFFC107), Color(0xFFFFC107), Color.White),
-        ThemeSwatch("0xFF00BCD4", seedCyan, Color(0xFF00BCD4), Color(0xFF00BCD4), Color.White),
-    )
 
-    // 自定义主色弹窗
-    Dialog(
-        dialogState = customPrimaryColorDialogState,
-        title = { Text(text = stringResource(id = R.string.title_custom_theme)) },
-        buttons = {
-            androidx.compose.material.TextButton(onClick = {
-                customPrimaryColor = Color(
-                    App.ThemeDelegate.getColorByAttr(
-                        context,
-                        R.attr.colorPrimary,
-                        ThemeUtil.THEME_CUSTOM
-                    )
-                )
-                customPrimaryColorDialogState.show = false
-            }) {
-                Text(text = stringResource(id = R.string.button_cancel))
-            }
-            androidx.compose.material.TextButton(onClick = {
-                context.appPreferences.customPrimaryColor =
-                    CustomThemeDialog.toString(customPrimaryColor.toArgb())
-                useSeedTheme = true
-                ThemeUtil.setUseDynamicTheme(false)
-                ThemeUtil.switchTheme(ThemeUtil.THEME_CUSTOM)
-                customPrimaryColorDialogState.show = false
-            }) {
-                Text(text = stringResource(id = R.string.button_finish))
-            }
-        }
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(CircleShape)
-                    .background(customPrimaryColor)
-            )
-            Spacer(modifier = Modifier.size(16.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(
-                    Color(0xFF2196F3), Color(0xFF4CAF50), Color(0xFFFF9800),
-                    Color(0xFFE91E63), Color(0xFF9C27B0), Color(0xFFF44336),
-                ).forEach { preset ->
-                    Spacer(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(CircleShape)
-                            .background(preset)
-                            .border(
-                                width = if (customPrimaryColor == preset) 2.dp else 0.dp,
-                                color = ExtendedTheme.colors.primary,
-                                shape = CircleShape
-                            )
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                                onClick = { customPrimaryColor = preset }
-                            )
-                    )
-                }
-            }
-        }
+    // HCT 自定义取色器
+    val hctPickerDialogState = rememberDialogState()
+    val initialPickerColor = parseSeedColor(seedColorPref)
+
+    /** 选定种子色的统一写入（预设/自定义共用） */
+    fun applySeedColor(hex: String) {
+        seedColorPref = hex
+        useSeedTheme = true
+        ThemeUtil.setUseDynamicTheme(false)
+        ThemeUtil.switchTheme(ThemeUtil.THEME_CUSTOM)
     }
 
     MyScaffold(
@@ -402,6 +294,31 @@ fun CustomSettingsPage(
                 }
             }
 
+            // ── 主题色彩（MD3 种子色点网格 + 跟随系统 + HCT 自定义取色器）
+            item {
+                SectionLabel(text = stringResource(id = R.string.title_theme_color), icon = Icons.Rounded.Palette)
+            }
+            item {
+                ColorDotGrid(
+                    currentSeedHex = seedColorPref,
+                    dynamicSelected = dynamicSelected,
+                    showFollowSystem = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
+                    isNight = currentIsNight,
+                    schemeVariant = schemeVariant,
+                    customColors = customColors,
+                    onSelectFollowSystem = {
+                        useSeedTheme = false
+                        ThemeUtil.setUseDynamicTheme(true)
+                        ThemeUtil.switchTheme(ThemeUtil.THEME_CUSTOM)
+                    },
+                    onSelectColor = { hex -> applySeedColor(hex) },
+                    onAddColor = { hctPickerDialogState.show() },
+                    onDeleteColor = { hex ->
+                        customColorsRaw = serializeCustomSeedColors(customColors - hex)
+                    },
+                )
+            }
+
             // ── 配色风格（MD3 DynamicSchemeVariant，色卡即预览）
             item {
                 SectionLabel(text = schemeStyleLabel)
@@ -442,53 +359,7 @@ fun CustomSettingsPage(
                 }
             }
 
-            // ── 主题色彩（MD3 种子色）
-            item {
-                SectionLabel(text = stringResource(id = R.string.title_theme_color), icon = Icons.Rounded.Palette)
-            }
-            val seedRows = (seedPresets + ThemeSwatch(
-                "custom",
-                customLabel,
-                Color(runCatching { seedColorPref.toColorInt() }.getOrDefault(0xFF2196F3.toInt())),
-                Color.Transparent,
-                Color.Transparent
-            )).chunked(4)
-            items(seedRows.size) { rowIndex ->
-                val row = seedRows[rowIndex]
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 5.dp)
-                ) {
-                    row.forEach { swatch ->
-                        val selected = useSeedTheme && swatch.id != "custom" &&
-                                seedColorPref == swatch.id
-                        ColorSwatchCard(
-                            swatch = swatch,
-                            selected = selected,
-                            schemeVariant = schemeVariant,
-                            isNight = currentIsNight,
-                            modifier = Modifier.weight(1f),
-                            onClick = {
-                                if (swatch.id == "custom") {
-                                    customPrimaryColorDialogState.show()
-                                } else {
-                                    seedColorPref = swatch.id
-                                    useSeedTheme = true
-                                    ThemeUtil.setUseDynamicTheme(false)
-                                    ThemeUtil.switchTheme(ThemeUtil.THEME_CUSTOM)
-                                }
-                            }
-                        )
-                    }
-                    repeat(4 - row.size) {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
-                }
-            }
-
-            // ── 通用
+            // ── 更多
             item {
                 SectionLabel(text = stringResource(id = R.string.title_theme_more))
             }
@@ -557,126 +428,16 @@ fun CustomSettingsPage(
             }
         }
     }
-}
 
-@Composable
-internal fun SectionLabel(text: String, icon: ImageVector? = null) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        modifier = Modifier.padding(start = 20.dp, end = 16.dp, top = 24.dp, bottom = 10.dp)
-    ) {
-        if (icon != null) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = ExtendedTheme.colors.primary,
-                modifier = Modifier.size(18.dp)
-            )
-        }
-        Text(
-            text = text,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = ExtendedTheme.colors.primary
-        )
-    }
-}
-
-/** Bettbox 风格分组卡片：圆角 20，组内行间细分隔线 */
-@Composable
-internal fun AppearanceCard(
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 5.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(color = ExtendedTheme.colors.card),
-        content = content
-    )
-}
-
-@Composable
-internal fun CardDivider() {
-    Divider(
-        thickness = 1.dp,
-        color = ExtendedTheme.colors.divider.copy(alpha = if (ExtendedTheme.colors.isNightMode) 0.45f else 0.6f),
-        modifier = Modifier.padding(start = 16.dp, end = 16.dp)
-    )
-}
-
-@Composable
-internal fun SettingRow(
-    icon: ImageVector,
-    title: String,
-    summary: String? = null,
-    enabled: Boolean = true,
-    onClick: (() -> Unit)? = null,
-    trailing: (@Composable () -> Unit)? = null,
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .alpha(if (enabled) 1f else 0.5f)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                enabled = enabled && onClick != null,
-                onClick = { onClick?.invoke() }
-            )
-            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = ExtendedTheme.colors.textSecondary,
-            modifier = Modifier.size(24.dp)
-        )
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, style = MaterialTheme.typography.subtitle1)
-            if (summary != null) {
-                Text(
-                    text = summary,
-                    style = MaterialTheme.typography.body2,
-                    color = ExtendedTheme.colors.textSecondary
-                )
-            }
-        }
-        trailing?.invoke()
-    }
-}
-
-@Composable
-internal fun SwitchSettingRow(
-    icon: ImageVector,
-    title: String,
-    summary: String? = null,
-    summaryOn: String? = null,
-    summaryOff: String? = null,
-    key: String,
-    defaultValue: Boolean,
-    enabled: Boolean = true,
-    onCheckedChange: ((Boolean) -> Unit)? = null,
-) {
-    var checked by rememberPreferenceAsMutableState(
-        key = booleanPreferencesKey(key),
-        defaultValue = defaultValue
-    )
-    SettingRow(
-        icon = icon,
-        title = title,
-        summary = if (checked) summaryOn ?: summary else summaryOff ?: summary,
-        enabled = enabled,
-        onClick = {
-            checked = !checked
-            onCheckedChange?.invoke(checked)
-        },
-        trailing = {
-            Switch(checked = checked, onCheckedChange = null, enabled = enabled)
+    HctColorPickerDialog(
+        dialogState = hctPickerDialogState,
+        initialColor = initialPickerColor,
+        isNight = currentIsNight,
+        schemeVariant = schemeVariant,
+        onConfirm = { color ->
+            val hex = formatColorHex(color.toArgb())
+            applySeedColor(hex)
+            customColorsRaw = serializeCustomSeedColors(customColors + hex)
         }
     )
 }
@@ -960,98 +721,5 @@ private fun VariantCard(
             modifier = Modifier.padding(horizontal = 8.dp)
         )
         Spacer(modifier = Modifier.size(8.dp))
-    }
-}
-
-@Composable
-private fun ColorSwatchCard(
-    swatch: ThemeSwatch,
-    selected: Boolean,
-    schemeVariant: String,
-    isNight: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val hapticFeedback = LocalHapticFeedback.current
-    // 三色点 = 该种子在当前配色风格下生成的 primary/secondary/tertiary（色卡即预览）
-    val scheme = remember(swatch.fill, schemeVariant, isNight) {
-        dynamicColorScheme(
-            seedColor = swatch.fill,
-            isDark = isNight,
-            style = runCatching { PaletteStyle.valueOf(schemeVariant) }
-                .getOrDefault(PaletteStyle.TonalSpot),
-        )
-    }
-    val borderColor by animateColorAsState(
-        targetValue = if (selected) ExtendedTheme.colors.primary else ExtendedTheme.colors.divider,
-        animationSpec = tween(durationMillis = 200),
-        label = "swatchBorder"
-    )
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(0.9f)
-                .clip(SwatchShape)
-                .background(scheme.primary)
-                .border(
-                    width = if (selected) 2.dp else 1.dp,
-                    color = borderColor,
-                    shape = SwatchShape
-                )
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = {
-                        hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        onClick()
-                    }
-                )
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .background(ExtendedTheme.colors.background)
-                    .padding(vertical = 8.dp)
-            ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                    listOf(scheme.primary, scheme.secondary, scheme.tertiary).forEach { color ->
-                        Spacer(
-                            modifier = Modifier
-                                .size(9.dp)
-                                .clip(CircleShape)
-                                .background(color)
-                        )
-                    }
-                }
-            }
-            if (selected) {
-                Icon(
-                    imageVector = Icons.Rounded.Check,
-                    contentDescription = stringResource(id = R.string.desc_checked),
-                    tint = Color.White,
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(Color.Black.copy(alpha = 0.25f))
-                        .padding(6.dp)
-                )
-            }
-        }
-        Spacer(modifier = Modifier.size(5.dp))
-        Text(
-            text = swatch.name,
-            fontSize = 11.sp,
-            maxLines = 1,
-            textAlign = TextAlign.Center,
-            color = ExtendedTheme.colors.text
-        )
     }
 }

@@ -58,9 +58,9 @@ import com.huanchengfly.tieba.post.arch.pageViewModel
 import com.huanchengfly.tieba.post.models.database.Account
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.page.main.LocalMainBottomInsets
-import com.huanchengfly.tieba.post.ui.page.settings.custom.AppearanceCard
-import com.huanchengfly.tieba.post.ui.page.settings.custom.CardDivider
-import com.huanchengfly.tieba.post.ui.page.settings.custom.SettingRow
+import com.huanchengfly.tieba.post.ui.page.settings.components.AppearanceCard
+import com.huanchengfly.tieba.post.ui.page.settings.components.CardDivider
+import com.huanchengfly.tieba.post.ui.page.settings.components.SettingRow
 import com.huanchengfly.tieba.post.ui.common.theme.compose.pullRefreshIndicator
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.AboutPageDestination

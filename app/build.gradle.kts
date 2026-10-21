@@ -155,7 +155,6 @@ dependencies {
 //    implementation fileTree(include: ["*.jar"], dir: "libs")
 
     implementation(libs.net.swiftzer.semver.semver)
-    implementation(libs.godaddy.color.picker)
 
     implementation(libs.airbnb.lottie)
     implementation(libs.airbnb.lottie.compose)

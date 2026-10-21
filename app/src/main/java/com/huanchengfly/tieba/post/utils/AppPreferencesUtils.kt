@@ -93,7 +93,10 @@ open class AppPreferencesUtils private constructor(ctx: Context) {
         key = "collect_thread_desc_sort"
     )
 
-    var customPrimaryColor by DataStoreDelegates.string(key = "custom_primary_color")
+    var customPrimaryColor by DataStoreDelegates.string(
+        defaultValue = "#FF2196F3",
+        key = "custom_primary_color"
+    )
 
     var customStatusBarFontDark by DataStoreDelegates.boolean(
         defaultValue = false,
@@ -115,7 +118,7 @@ open class AppPreferencesUtils private constructor(ctx: Context) {
     var doNotUsePhotoPicker by DataStoreDelegates.boolean(defaultValue = false)
 
     var useDynamicColorTheme by DataStoreDelegates.boolean(defaultValue = false)
-    var useSeedTheme by DataStoreDelegates.boolean(defaultValue = false, key = "use_seed_theme")
+    var useSeedTheme by DataStoreDelegates.boolean(defaultValue = true, key = "use_seed_theme")
 
     var followSystemNight by DataStoreDelegates.boolean(
         defaultValue = true,
@@ -213,7 +216,7 @@ open class AppPreferencesUtils private constructor(ctx: Context) {
         key = "status_bar_darker"
     )
 
-    var theme by DataStoreDelegates.string(defaultValue = ThemeUtil.THEME_DEFAULT)
+    var theme by DataStoreDelegates.string(defaultValue = ThemeUtil.THEME_CUSTOM)
 
     var translucentBackgroundAlpha by DataStoreDelegates.int(
         defaultValue = 255,
