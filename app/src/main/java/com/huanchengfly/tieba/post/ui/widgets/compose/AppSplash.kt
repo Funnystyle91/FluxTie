@@ -77,6 +77,9 @@ import kotlin.math.sin
 object SplashState {
     val ready = MutableStateFlow(false)
 
+    /** 系统 SplashScreen 是否已开始退场交接 */
+    val systemSplashDismissed = MutableStateFlow(false)
+
     /** 启动屏是否已结束（退场触发）——供启动静默检查等待，避免弹窗被遮挡。 */
     val finished = MutableStateFlow(false)
 
@@ -84,8 +87,13 @@ object SplashState {
         ready.value = true
     }
 
+    fun markSystemSplashDismissed() {
+        systemSplashDismissed.value = true
+    }
+
     fun reset() {
         ready.value = false
+        systemSplashDismissed.value = false
         finished.value = false
     }
 }
@@ -153,16 +161,21 @@ fun AppSplashOverlay() {
 
     LaunchedEffect(Unit) {
         SplashState.reset()
-        val start = System.currentTimeMillis()
-        // 约 420ms 后无缝承接系统启动屏动效终态，启动一镜到底上浮
-        delay(420)
+        // 1. 等待系统 SplashScreen 开始揭开交接（设置 3000ms 兜底避免极端无信号卡死）
+        val waitStart = System.currentTimeMillis()
+        while (!SplashState.systemSplashDismissed.value && (System.currentTimeMillis() - waitStart) < 3000L) {
+            delay(40)
+        }
+        // 系统揭开透明遮罩后，在中心短暂稳定停留 100ms 确保视觉零顿挫，随后启动一镜到底升腾
+        delay(100)
         isHeaderStage = true
+        val animStart = System.currentTimeMillis()
 
-        // 循环播放直到：加载完成且达到最短展示时长（1500ms 保证一镜到底完整呈现）；3.5s 超时兜底
-        val minDuration = 1500L
+        // 循环播放直到：加载完成且达到最短展示时长（1400ms 保证一镜到底完整呈现）；3.5s 超时兜底
+        val minDuration = 1400L
         val timeout = 3500L
         while (true) {
-            val elapsed = System.currentTimeMillis() - start
+            val elapsed = System.currentTimeMillis() - animStart
             if ((SplashState.ready.value && elapsed >= minDuration) || elapsed >= timeout) break
             delay(100)
         }
