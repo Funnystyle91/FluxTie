@@ -22,13 +22,24 @@
 > [!WARNING]
 > **本软件及源码仅供学习交流使用，严禁用于商业用途。**
 
-## 📸 预览
+## 🌟 特性 Showcase
+
+<p align="center">
+  <img src="docs/images/bento_grid_showcase.png" width="920" alt="FluxTie Bento Grid Showcase" />
+</p>
+
+<details>
+<summary><b>查看各功能模块实机截屏</b></summary>
+
+<br>
 
 | 启动屏 | 动态页 | 帖子页 |
 |:---:|:---:|:---:|
 | <img src="docs/images/preview_splash.png" width="240" /> | <img src="docs/images/preview_explore.png" width="240" /> | <img src="docs/images/preview_thread.png" width="240" /> |
 | **我** | **设置** | **主题配色** |
 | <img src="docs/images/preview_user.png" width="240" /> | <img src="docs/images/preview_settings.png" width="240" /> | <img src="docs/images/preview_appearance.png" width="240" /> |
+
+</details>
 
 ## ✨ 特性
 
