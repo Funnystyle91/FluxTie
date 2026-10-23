@@ -22,24 +22,16 @@
 > [!WARNING]
 > **本软件及源码仅供学习交流使用，严禁用于商业用途。**
 
-## 🌟 特性 Showcase
+## 🌟 核心特性 Showcase
 
 <p align="center">
   <img src="docs/images/bento_grid_showcase.png" width="920" alt="FluxTie Bento Grid Showcase" />
 </p>
 
-<details>
-<summary><b>查看各功能模块实机截屏</b></summary>
-
-<br>
-
-| 启动屏 | 动态页 | 帖子页 |
-|:---:|:---:|:---:|
-| <img src="docs/images/preview_splash.png" width="240" /> | <img src="docs/images/preview_explore.png" width="240" /> | <img src="docs/images/preview_thread.png" width="240" /> |
-| **我** | **设置** | **主题配色** |
-| <img src="docs/images/preview_user.png" width="240" /> | <img src="docs/images/preview_settings.png" width="240" /> | <img src="docs/images/preview_appearance.png" width="240" /> |
-
-</details>
+- 💧 **物理流体动力学启动**：双水滴对角高速冲入对冲 → 挤压形变阻尼回弹 → 官方贴字破水升腾 → 一镜到底浮力阻尼微摇摆与「为兴趣而生」随动流光微徽章。
+- 🎨 **MaterialKolor 种子配色**：种子色 × 9 种配色风格（柔和色调/鲜明/高保真…）实时生成整套色板，深色支持深邃灰与 AMOLED 极黑像素熄灭。
+- 🎈 **真悬浮胶囊底栏**：Edge-to-Edge 内容从毛玻璃胶囊后自然透出，触感反馈，Tab 切换交叉淡化平滑过渡。
+- 💬 **纯净体验打磨**：全量换装官方 12.0 MEUX 纯白字标与三层微环境立体阴影（锐度提升 +108.2%），个人表情包云同步与长按原地放大预览，纯净无广开源。
 
 ## ✨ 特性
 
