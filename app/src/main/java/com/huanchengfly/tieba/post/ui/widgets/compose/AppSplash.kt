@@ -55,7 +55,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -268,6 +267,17 @@ private fun LiquidSloganBadge(
         label = "shimmerOffset"
     )
 
+    // 文字流光：在方案 C 色系间循环插值（避免着色器文字在软件渲染器上崩溃）
+    val colorPhase by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2600, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "sloganColorPhase"
+    )
+
     // 星石与高光的呼吸律动 (0.85 ~ 1.15)
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 0.85f,
@@ -283,21 +293,21 @@ private fun LiquidSloganBadge(
     val skyBlue = Color(0xFF42A5F5)    // 冰川天蓝
     val deepBlue = Color(0xFF1565C0)   // 贴吧经典深蓝
     val amberGold = Color(0xFFFFB300)  // 加精琥珀星石
-    val highlight = Color(0xFFFFFFFF)  // 晶莹纯白折射
+
+    val animatedTextColor = run {
+        val palette = listOf(
+            deepBlue,
+            Color(0xFF1E88E5),
+            skyBlue,
+            Color(0xFF1E88E5),
+            deepBlue
+        )
+        val t = colorPhase * (palette.size - 1)
+        val index = t.toInt().coerceIn(0, palette.size - 2)
+        lerpColor(palette[index], palette[index + 1], t - index)
+    }
 
     // 流光 Brush：随 shimmerOffset 动态滑动的水波折射光泽
-    val textBrush = Brush.linearGradient(
-        colors = listOf(
-            deepBlue,
-            skyBlue,
-            highlight,
-            amberGold,
-            deepBlue
-        ),
-        start = Offset(shimmerOffset * 280f, 0f),
-        end = Offset((shimmerOffset + 1.2f) * 280f, 60f)
-    )
-
     // 胶囊外壳流光边框
     val borderBrush = Brush.horizontalGradient(
         colors = listOf(
@@ -341,7 +351,7 @@ private fun LiquidSloganBadge(
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 3.5.sp,
             fontFamily = SplashFontFamily,
-            style = TextStyle(brush = textBrush)
+            color = animatedTextColor
         )
 
         Spacer(modifier = Modifier.width(6.dp))
