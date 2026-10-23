@@ -1,6 +1,7 @@
 package com.huanchengfly.tieba.post.ui.widgets.compose
 
-import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.EaseInCubic
 import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -104,43 +105,76 @@ private val SplashFontFamily = FontFamily(
     Font(R.font.roboto_medium, FontWeight.Medium),
 )
 
+// 物理流体浮力阻尼曲线：起步推力充沛，末端极其舒缓柔美
+private val FluidBuoyancyEasing = CubicBezierEasing(0.18f, 1.0f, 0.22f, 1.0f)
+
 /**
- * 应用内启动屏（方案 C 一镜到底流体编排）：
- * 1. 初始阶段（0~420ms）：Logo 严格处于屏幕物理中心（160dp 满态），零偏差承接系统 SplashScreen AVD 动效终态。
- * 2. 一镜到底升维（420~1040ms）：Logo 平滑上浮（0dp -> -142dp）并等比收敛（160dp -> 83dp），成为通透舒展的头部徽标。
- * 3. 内容随动与留白（640~1080ms）：在 Logo 充分腾出空间后，FluxTie 品牌名、专属液态流光徽章“为兴趣而生”与水球 Loading 顺势滑入，留出足足 78dp 黄金留白，绝不重叠。
- * 4. 退场交接：首页数据就绪后，整体品牌面板轻柔向上浮升淡出，底栏与 Feed 流迎面浮现。
+ * 应用内启动屏（方案 C 一镜到底流体编排终极版）：
+ * 1. 物理同源锚定（0~100ms）：Logo 严格处于屏幕物理中心（160dp 满态），零偏差承接系统 SplashScreen 双水滴撞击碰撞终态。
+ * 2. 流体浮力升腾（100~800ms）：Logo 伴随流体微摇摆（-2.2° -> +0.8° -> 0°）平滑升腾至 -142dp，等比收敛至 83dp 头部徽标。
+ * 3. 品牌字间距舒展与徽章液态拉伸展开（320~860ms）：FluxTie 英文自 1.sp 优雅扩展至 3.5.sp；“为兴趣而生”专属流光徽章从中心水滴向两侧液态延展，留下 78dp 黄金留白。
+ * 4. 极致退场：首页数据就绪后轻柔升腾淡出，底栏与帖子流迎面涌出。
  */
 @Composable
 fun AppSplashOverlay() {
     var visible by remember { mutableStateOf(true) }
     var isHeaderStage by remember { mutableStateOf(false) }
 
-    // 1. 一镜到底核心动效：Logo 充分向上浮升（-142dp）并等比缩放至 83dp 精致头部徽标
+    // 1. 一镜到底核心动效：Logo 伴随流体浮力曲线升腾（-142dp）并等比收敛至 83dp
     val logoTranslateY by animateDpAsState(
         targetValue = if (isHeaderStage) (-142).dp else 0.dp,
-        animationSpec = tween(durationMillis = 620, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 680, easing = FluidBuoyancyEasing),
         label = "logoTranslateY"
     )
     val logoScale by animateFloatAsState(
         targetValue = if (isHeaderStage) 0.52f else 1.0f,
-        animationSpec = tween(durationMillis = 620, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 680, easing = FluidBuoyancyEasing),
         label = "logoScale"
     )
 
-    // 2. 标语、应用名与 Loading 随动滑入与淡入 (留足 220ms 延迟，待 Logo 腾出空间后再从容滑入，彻底消除视觉穿帮)
+    // 水流浮力微摇摆动效：上浮时伴随轻微惯性后掠倾角，到位后柔和归正
+    val logoRotation by animateFloatAsState(
+        targetValue = if (isHeaderStage) 0.0f else 0.0f,
+        animationSpec = keyframes {
+            durationMillis = 680
+            0.0f at 0
+            -2.4f at 220 with FluidBuoyancyEasing
+            0.8f at 480 with FluidBuoyancyEasing
+            0.0f at 680
+        },
+        label = "logoRotation"
+    )
+
+    // 2. 品牌大标 FluxTie 字间距优雅延展 (从凝聚 1.sp 展开到大气舒展的 3.5.sp)
+    val brandLetterSpacing by animateFloatAsState(
+        targetValue = if (isHeaderStage) 3.5f else 1.0f,
+        animationSpec = tween(durationMillis = 560, delayMillis = 200, easing = FluidBuoyancyEasing),
+        label = "brandLetterSpacing"
+    )
+    val brandScale by animateFloatAsState(
+        targetValue = if (isHeaderStage) 1.0f else 0.88f,
+        animationSpec = tween(durationMillis = 560, delayMillis = 200, easing = FluidBuoyancyEasing),
+        label = "brandScale"
+    )
+
+    // 3. 专属流光徽章液态延展与文字浮现
     val contentRevealAlpha by animateFloatAsState(
         targetValue = if (isHeaderStage) 1.0f else 0.0f,
-        animationSpec = tween(durationMillis = 440, delayMillis = 220, easing = FastOutSlowInEasing),
+        animationSpec = tween(durationMillis = 440, delayMillis = 240, easing = FluidBuoyancyEasing),
         label = "contentRevealAlpha"
     )
     val contentRevealSlide by animateDpAsState(
-        targetValue = if (isHeaderStage) 0.dp else 28.dp,
-        animationSpec = tween(durationMillis = 480, delayMillis = 220, easing = FastOutSlowInEasing),
+        targetValue = if (isHeaderStage) 0.dp else 24.dp,
+        animationSpec = tween(durationMillis = 520, delayMillis = 220, easing = FluidBuoyancyEasing),
         label = "contentRevealSlide"
     )
+    val badgeExpansion by animateFloatAsState(
+        targetValue = if (isHeaderStage) 1.0f else 0.0f,
+        animationSpec = tween(durationMillis = 500, delayMillis = 280, easing = FluidBuoyancyEasing),
+        label = "badgeExpansion"
+    )
 
-    // 3. 整体退场过渡（开门交接）
+    // 4. 整体退场过渡（开门交接）
     val transition = updateTransition(targetState = visible, label = "splashExit")
     val bgAlpha by transition.animateFloat(
         transitionSpec = { tween(durationMillis = 300, easing = LinearEasing) },
@@ -191,7 +225,7 @@ fun AppSplashOverlay() {
                 .graphicsLayer { alpha = bgAlpha }
                 .background(splashBg)
         ) {
-            // 核心应用图标：初始 160dp 绝对居中，随着一镜到底上移至头部（-142dp）并等比缩放至 83dp
+            // 核心应用图标：初始 160dp 绝对居中，随着一镜到底上移至头部（-142dp），伴随微摇摆与等比缩放至 83dp
             Box(
                 modifier = Modifier
                     .align(Alignment.Center)
@@ -199,6 +233,7 @@ fun AppSplashOverlay() {
                         translationY = (logoTranslateY + exitTranslateY).toPx()
                         scaleX = logoScale * exitScale
                         scaleY = logoScale * exitScale
+                        rotationZ = logoRotation
                         alpha = exitAlpha
                     }
             ) {
@@ -218,21 +253,26 @@ fun AppSplashOverlay() {
                         scaleY = exitScale
                     }
             ) {
-                // 1. 品牌英文大标
+                // 1. 品牌英文大标 (动态字间距舒展)
                 Text(
                     text = "FluxTie",
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
-                    letterSpacing = 3.sp,
+                    letterSpacing = brandLetterSpacing.sp,
                     fontFamily = SplashFontFamily,
-                    color = ExtendedTheme.colors.text
+                    color = ExtendedTheme.colors.text,
+                    modifier = Modifier.graphicsLayer {
+                        scaleX = brandScale
+                        scaleY = brandScale
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // 2. 核心专属特殊效果标语：“为兴趣而生”液态流光徽章
+                // 2. 核心专属特殊效果标语：“为兴趣而生”液态流光微胶囊徽章 (液态延展展开)
                 LiquidSloganBadge(
-                    text = stringResource(id = R.string.splash_tagline)
+                    text = stringResource(id = R.string.splash_tagline),
+                    expansionProgress = badgeExpansion
                 )
 
                 Spacer(modifier = Modifier.height(30.dp))
@@ -265,7 +305,8 @@ fun AppSplashOverlay() {
 @Composable
 private fun LiquidSloganBadge(
     text: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    expansionProgress: Float = 1.0f
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "sloganFlow")
 
@@ -332,11 +373,20 @@ private fun LiquidSloganBadge(
         endX = (shimmerOffset + 1.2f) * 180f
     )
 
+    // 动态液态拉伸延展：胶囊从中心小水滴平滑扩展为完整徽章
+    val currentScaleX = 0.70f + 0.30f * expansionProgress
+    val currentAlpha = expansionProgress.coerceIn(0f, 1f)
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
+            .graphicsLayer {
+                scaleX = currentScaleX
+                scaleY = 0.88f + 0.12f * expansionProgress
+                alpha = currentAlpha
+            }
             .clip(RoundedCornerShape(18.dp))
-            .background(skyBlue.copy(alpha = 0.08f))
+            .background(skyBlue.copy(alpha = 0.08f * expansionProgress))
             .border(
                 border = BorderStroke(1.dp, borderBrush),
                 shape = RoundedCornerShape(18.dp)
@@ -348,8 +398,8 @@ private fun LiquidSloganBadge(
             modifier = Modifier
                 .size(11.dp)
                 .graphicsLayer {
-                    scaleX = pulseScale
-                    scaleY = pulseScale
+                    scaleX = pulseScale * expansionProgress
+                    scaleY = pulseScale * expansionProgress
                 }
         ) {
             drawSparkleStar(color = amberGold)
@@ -362,7 +412,7 @@ private fun LiquidSloganBadge(
             text = text,
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
-            letterSpacing = 3.5.sp,
+            letterSpacing = (2.0f + 1.5f * expansionProgress).sp,
             fontFamily = SplashFontFamily,
             color = animatedTextColor
         )
@@ -374,8 +424,8 @@ private fun LiquidSloganBadge(
             modifier = Modifier
                 .size(6.dp)
                 .graphicsLayer {
-                    scaleX = 2f - pulseScale
-                    scaleY = 2f - pulseScale
+                    scaleX = (2f - pulseScale) * expansionProgress
+                    scaleY = (2f - pulseScale) * expansionProgress
                 }
         ) {
             drawCircle(color = skyBlue)
