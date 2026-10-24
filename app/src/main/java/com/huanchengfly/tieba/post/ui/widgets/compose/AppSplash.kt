@@ -113,7 +113,7 @@ private val FluidBuoyancyEasing = CubicBezierEasing(0.18f, 1.0f, 0.22f, 1.0f)
  * 1. 物理同源锚定（0~30ms）：Logo 严格处于屏幕物理中心（160dp 满态），零偏差承接系统 SplashScreen 双水滴撞击碰撞终态。
  * 2. 流体浮力升腾（30~280ms）：Logo 伴随流体微摇摆（-2.2° -> +0.8° -> 0°）平滑升腾至 -142dp，等比收敛至 83dp 头部徽标。
  * 3. 品牌字间距舒展与徽章液态拉伸展开（90~460ms）：FluxTie 英文自 1.sp 优雅扩展至 3.5.sp；“为兴趣而生”专属流光徽章从中心水滴向两侧液态延展，留下 78dp 黄金留白。
- * 4. 极致退场：首页数据就绪且满足最短展示（600ms）后整体淡出；1.8s 超时兜底。
+ * 4. 极致退场：首页数据就绪且满足最短展示（400ms）后整体淡出；800ms 超时兜底（启动屏只做品牌展示，不长时间阻塞于首页数据）。
  */
 @Composable
 fun AppSplashOverlay() {
@@ -195,19 +195,20 @@ fun AppSplashOverlay() {
 
     LaunchedEffect(Unit) {
         SplashState.reset()
-        // 1. 等待系统 SplashScreen 开始揭开交接（设置 2000ms 兜底避免极端无信号卡死）
+        // 1. 等待系统 SplashScreen 开始揭开交接（设置 1000ms 兜底避免极端无信号卡死）
         val waitStart = System.currentTimeMillis()
-        while (!SplashState.systemSplashDismissed.value && (System.currentTimeMillis() - waitStart) < 2000L) {
+        while (!SplashState.systemSplashDismissed.value && (System.currentTimeMillis() - waitStart) < 1000L) {
             delay(40)
         }
-        // 系统揭开透明遮罩后，在中心短暂稳定停留 80ms 确保视觉零顿挫，随后启动一镜到底升腾
-        delay(80)
+        // 系统揭开透明遮罩后，在中心短暂稳定停留 40ms 确保视觉零顿挫，随后启动一镜到底升腾
+        delay(40)
         isHeaderStage = true
         val animStart = System.currentTimeMillis()
 
-        // 循环播放直到：加载完成且达到最短展示时长（600ms 保证一镜到底完整呈现）；1.8s 超时兜底
-        val minDuration = 600L
-        val timeout = 1800L
+        // 循环播放直到：加载完成且达到最短展示时长（400ms 保证一镜到底核心呈现）；800ms 超时兜底
+        // 说明：启动屏只做品牌展示，不应被首页数据加载长时间阻塞——首页会在启动屏退场后自行加载并显示自身 loading。
+        val minDuration = 400L
+        val timeout = 800L
         while (true) {
             val elapsed = System.currentTimeMillis() - animStart
             if ((SplashState.ready.value && elapsed >= minDuration) || elapsed >= timeout) break
