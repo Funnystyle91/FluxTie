@@ -77,7 +77,7 @@ object FrsPageRepository {
     private fun writeCache(key: String, response: FrsPageResponse) {
         runCatching {
             val file = cacheFile(key)
-            file.writeBytes(response.encode().toByteArray())
+            file.writeBytes(response.encode())
             // 简单上限：超过阈值时删除最旧文件，避免无限增长
             val dir = cacheDir()
             val files = dir.listFiles { f -> f.name.startsWith(CACHE_PREFIX) } ?: return@runCatching
