@@ -17,6 +17,7 @@ import com.huanchengfly.tieba.post.api.models.LoginBean
 import com.huanchengfly.tieba.post.arch.GlobalEvent
 import com.huanchengfly.tieba.post.arch.emitGlobalEvent
 import com.huanchengfly.tieba.post.models.database.Account
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
@@ -63,12 +64,19 @@ object AccountUtil {
         get() = mutableAllAccountsState.value
 
     fun init(context: Context) {
+        val loginUser = runCatching {
+            context.getSharedPreferences("accountData", Context.MODE_PRIVATE).getInt("now", -1)
+        }.getOrDefault(-1)
+        if (loginUser == -1) {
+            // 未登录冷启动：不在主线程阻塞等 Room，账号列表后台补齐（切换账号菜单仅登录态可达）
+            mutableCurrentAccountState.value = null
+            CoroutineScope(Dispatchers.IO).launch {
+                mutableAllAccountsState.value = DatabaseUtil.getAllAccounts()
+            }
+            return
+        }
         val account = runCatching {
-            val loginUser =
-                context.getSharedPreferences("accountData", Context.MODE_PRIVATE).getInt("now", -1)
-            if (loginUser == -1) {
-                null
-            } else getAccountInfo(loginUser)
+            getAccountInfo(loginUser)
         }.getOrNull()
         mutableCurrentAccountState.value = account
         mutableAllAccountsState.value = runBlocking(Dispatchers.IO) { DatabaseUtil.getAllAccounts() }
