@@ -50,6 +50,8 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -86,21 +88,18 @@ fun AccountNavIcon(
     val currentAccount = LocalAccount.current
     if (spacer) Spacer(modifier = Modifier.width(12.dp))
     if (currentAccount == null) {
+        val loginDesc = stringResource(id = R.string.summary_not_logged_in)
         Box(
             modifier = Modifier
                 .clip(CircleShape)
                 .size(size)
-                .background(colorResource(id = R.color.ic_launcher_new_background))
                 .clickable {
                     onClick?.invoke() ?: navigator.navigate(LoginPageDestination)
-                },
+                }
+                .semantics { contentDescription = loginDesc },
             contentAlignment = Alignment.Center
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_launcher_new_foreground),
-                contentDescription = stringResource(id = R.string.app_name),
-                modifier = Modifier.fillMaxSize()
-            )
+            AvatarPlaceholder(size = size)
         }
     } else {
         val context = LocalContext.current

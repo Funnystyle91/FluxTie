@@ -256,6 +256,7 @@ private fun ColorDot(
             )
             .padding(if (selected) 3.dp else 0.dp)
             .clip(CircleShape),
+        contentAlignment = Alignment.Center
     ) {
         content?.invoke()
         if (selected) {
