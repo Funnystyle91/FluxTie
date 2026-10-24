@@ -58,6 +58,7 @@ import com.huanchengfly.tieba.post.models.PermissionBean
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.utils.ThemeUtils
 import com.huanchengfly.tieba.post.ui.page.destinations.ForumPageDestination
+import com.huanchengfly.tieba.post.repository.FrsPageRepository
 import com.huanchengfly.tieba.post.ui.page.destinations.ThreadPageDestination
 import com.huanchengfly.tieba.post.ui.widgets.compose.AccompanistWebChromeClient
 import com.huanchengfly.tieba.post.ui.widgets.compose.AccompanistWebViewClient
@@ -316,7 +317,7 @@ open class MyWebViewClient(
                         true
                     } else if (forumName != null) {
                         nativeNavigator?.navigate(
-                            ForumPageDestination(forumName)
+                            ForumPageDestination(forumName).also { FrsPageRepository.prefetch(forumName) }
                         )
                         true
                     } else false

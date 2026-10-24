@@ -32,6 +32,7 @@ import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.pullRefreshIndicator
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.ForumPageDestination
+import com.huanchengfly.tieba.post.repository.FrsPageRepository
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
 import com.huanchengfly.tieba.post.ui.widgets.compose.PullRefreshLogoIndicator
 import com.huanchengfly.tieba.post.ui.widgets.compose.Container
@@ -130,6 +131,7 @@ fun UserLikeForumPage(
                     fluid = fluid,
                     onClickForum = { forumBean ->
                         forumBean.name?.let {
+                            FrsPageRepository.prefetch(it)
                             navigator.navigate(ForumPageDestination(it))
                         }
                     },

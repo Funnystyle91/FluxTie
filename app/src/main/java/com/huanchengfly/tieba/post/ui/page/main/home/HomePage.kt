@@ -80,6 +80,7 @@ import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.common.theme.compose.pullRefreshIndicator
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.ForumPageDestination
+import com.huanchengfly.tieba.post.repository.FrsPageRepository
 import com.huanchengfly.tieba.post.ui.page.main.LocalMainBottomInsets
 import com.huanchengfly.tieba.post.ui.page.destinations.LoginPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.SearchPageDestination
@@ -565,6 +566,7 @@ fun HomePage(
                                                         .clip(RoundedCornerShape(100))
                                                         .background(color = ExtendedTheme.colors.chip)
                                                         .debounceClickable(onClick = {
+                                                            FrsPageRepository.prefetch(it.data)
                                                             navigator.navigate(
                                                                 ForumPageDestination(
                                                                     it.data
@@ -616,6 +618,7 @@ fun HomePage(
                                     item,
                                     listSingle,
                                     onClick = {
+                                        FrsPageRepository.prefetch(it.forumName)
                                         navigator.navigate(ForumPageDestination(it.forumName))
                                     },
                                     onUnfollow = {

@@ -109,11 +109,12 @@ private val SplashFontFamily = FontFamily(
 private val FluidBuoyancyEasing = CubicBezierEasing(0.18f, 1.0f, 0.22f, 1.0f)
 
 /**
- * 应用内启动屏（方案 C 一镜到底流体编排，速度优先，已大幅压缩）：
- * 1. 物理同源锚定（0~30ms）：Logo 严格处于屏幕物理中心（160dp 满态），零偏差承接系统 SplashScreen 双水滴撞击碰撞终态。
- * 2. 流体浮力升腾（30~280ms）：Logo 伴随流体微摇摆（-2.2° -> +0.8° -> 0°）平滑升腾至 -142dp，等比收敛至 83dp 头部徽标。
- * 3. 品牌字间距舒展与徽章液态拉伸展开（90~460ms）：FluxTie 英文自 1.sp 优雅扩展至 3.5.sp；“为兴趣而生”专属流光徽章从中心水滴向两侧液态延展，留下 78dp 黄金留白。
- * 4. 极致退场：首页数据就绪且满足最短展示（400ms）后整体淡出；800ms 超时兜底（启动屏只做品牌展示，不长时间阻塞于首页数据）。
+ * 应用内启动屏（速度优先模式 / L2）：
+ * 用户明确不在意开屏动画是否完整，只在意进入速度。
+ * 1. 等待系统 SplashScreen 开始揭开交接（600ms 兜底防极端无信号卡死）。
+ * 2. 系统揭开后仅做 120ms 极小地板停留（防首帧误判），随即立即交棒首页。
+ * 3. 不再等待首页首屏数据（SplashState.ready），首页自身显示骨架并在后台加载；
+ *    启动屏随之淡出（120ms），整体“一闪即退”，把开屏对进 app 的阻塞压到最低。
  */
 @Composable
 fun AppSplashOverlay() {
@@ -195,25 +196,16 @@ fun AppSplashOverlay() {
 
     LaunchedEffect(Unit) {
         SplashState.reset()
-        // 1. 等待系统 SplashScreen 开始揭开交接（设置 1000ms 兜底避免极端无信号卡死）
+        // 1. 等待系统 SplashScreen 开始揭开交接（设置 600ms 兜底避免极端无信号卡死）
         val waitStart = System.currentTimeMillis()
-        while (!SplashState.systemSplashDismissed.value && (System.currentTimeMillis() - waitStart) < 1000L) {
-            delay(40)
+        while (!SplashState.systemSplashDismissed.value && (System.currentTimeMillis() - waitStart) < 600L) {
+            delay(20)
         }
-        // 系统揭开透明遮罩后，在中心短暂稳定停留 40ms 确保视觉零顿挫，随后启动一镜到底升腾
-        delay(40)
-        isHeaderStage = true
-        val animStart = System.currentTimeMillis()
-
-        // 循环播放直到：加载完成且达到最短展示时长（400ms 保证一镜到底核心呈现）；800ms 超时兜底
-        // 说明：启动屏只做品牌展示，不应被首页数据加载长时间阻塞——首页会在启动屏退场后自行加载并显示自身 loading。
-        val minDuration = 400L
-        val timeout = 800L
-        while (true) {
-            val elapsed = System.currentTimeMillis() - animStart
-            if ((SplashState.ready.value && elapsed >= minDuration) || elapsed >= timeout) break
-            delay(100)
-        }
+        // L2（速度优先）：系统交接完成后仅做极短稳定停留（120ms 地板，防首帧误判），
+        // 立即交棒首页；首页自身会显示骨架并在后台加载首屏数据，启动屏不再等待首屏网络。
+        // 用户明确表示不在意开屏动画是否完整，只在意进入速度，因此跳过升腾动画、一闪即退。
+        delay(120)
+        SplashState.markReady()
         visible = false
         SplashState.finished.value = true
     }

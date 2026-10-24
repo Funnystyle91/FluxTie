@@ -97,6 +97,7 @@ import com.huanchengfly.tieba.post.rememberPreferenceAsState
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.page.NavGraphs
 import com.huanchengfly.tieba.post.ui.page.destinations.ForumPageDestination
+import com.huanchengfly.tieba.post.repository.FrsPageRepository
 import com.huanchengfly.tieba.post.ui.page.destinations.ThreadPageDestination
 import com.huanchengfly.tieba.post.ui.utils.DevicePosture
 import com.huanchengfly.tieba.post.ui.utils.isBookPosture
@@ -266,6 +267,7 @@ class MainActivityV2 : BaseComposeActivity() {
             when (uri.path.orEmpty().lowercase()) {
                 "/frs" -> {
                     val forumName = uri.getQueryParameter("kw") ?: return true
+                    FrsPageRepository.prefetch(forumName)
                     navigate(ForumPageDestination(forumName))
                 }
 
@@ -280,6 +282,7 @@ class MainActivityV2 : BaseComposeActivity() {
             when {
                 uri.path.orEmpty().lowercase() == "/f" -> {
                     val forumName = uri.getQueryParameter("kw") ?: return true
+                    FrsPageRepository.prefetch(forumName)
                     navigate(ForumPageDestination(forumName))
                 }
 

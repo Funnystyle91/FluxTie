@@ -28,6 +28,7 @@ import com.huanchengfly.tieba.post.ui.common.theme.compose.pullRefreshIndicator
 import com.huanchengfly.tieba.post.ui.page.main.LocalMainBottomInsets
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.ForumPageDestination
+import com.huanchengfly.tieba.post.repository.FrsPageRepository
 import com.huanchengfly.tieba.post.ui.page.destinations.ThreadPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.UserProfilePageDestination
 import com.huanchengfly.tieba.post.ui.widgets.compose.Container
@@ -133,7 +134,10 @@ fun ConcernPage(
                                             )
                                         )
                                     },
-                                    onClickForum = { navigator.navigate(ForumPageDestination(it.name)) },
+                                    onClickForum = {
+                                        FrsPageRepository.prefetch(it.name)
+                                        navigator.navigate(ForumPageDestination(it.name))
+                                    },
                                     onClickUser = { navigator.navigate(UserProfilePageDestination(it.id)) },
                                 )
                             }

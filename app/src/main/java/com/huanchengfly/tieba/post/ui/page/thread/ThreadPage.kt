@@ -135,6 +135,7 @@ import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.ProvideNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.CopyTextDialogPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.ForumPageDestination
+import com.huanchengfly.tieba.post.repository.FrsPageRepository
 import com.huanchengfly.tieba.post.ui.page.destinations.ReplyPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.SubPostsSheetPageDestination
 import com.huanchengfly.tieba.post.ui.page.destinations.ThreadPageDestination
@@ -1338,11 +1339,14 @@ fun ThreadPage(
                         onBack = { navigator.navigateUp() },
                         onForumClick = {
                             val forumName = forum?.get { name }
-                            if (forumName != null) navigator.navigate(
-                                ForumPageDestination(
-                                    forumName
+                            if (forumName != null) {
+                                FrsPageRepository.prefetch(forumName)
+                                navigator.navigate(
+                                    ForumPageDestination(
+                                        forumName
+                                    )
                                 )
-                            )
+                            }
                         }
                     )
                 },

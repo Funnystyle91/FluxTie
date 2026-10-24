@@ -6,14 +6,39 @@ import com.huanchengfly.tieba.post.api.models.protos.frsPage.FrsPageResponse
 import com.huanchengfly.tieba.post.api.models.protos.threadList.ThreadListResponse
 import com.huanchengfly.tieba.post.api.retrofit.exception.TiebaUnknownException
 import com.huanchengfly.tieba.post.utils.appPreferences
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 
 object FrsPageRepository {
     var lastHash: String = ""
     var lastResponse: FrsPageResponse? = null
+
+    /** 进吧预取的独立协程作用域（IO），与页面生命周期解耦，点到即发、即弃。 */
+    private val prefetchScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    /**
+     * 进吧预取（方案 C：点击即发，与导航转场并行）。
+     * 在用户“点下吧”的瞬间提前发起首屏 frsPage 请求，采用与 ForumViewModel.Load 完全相同的
+     * hash（含每吧独立 sortType），使 ForumPage 组合完成后首页数据大概率已就绪或在途，
+     * 从而消除“整屏白等”。请求结果经 frsPage 的 onEach 写入 lastResponse，供页面命中复用。
+     */
+    fun prefetch(forumName: String) {
+        prefetchScope.launch {
+            runCatching {
+                val defaultSortType =
+                    App.INSTANCE.appPreferences.defaultSortType?.toIntOrNull() ?: 0
+                val sortType =
+                    App.INSTANCE.dataStore.getInt("${forumName}_sort_type", defaultSortType)
+                frsPage(forumName, 1, 1, sortType, null, true).collect {}
+            }
+        }
+    }
 
     fun frsPage(
         forumName: String,

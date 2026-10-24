@@ -30,6 +30,7 @@ import com.huanchengfly.tieba.post.models.database.History
 import com.huanchengfly.tieba.post.ui.common.theme.compose.ExtendedTheme
 import com.huanchengfly.tieba.post.ui.page.LocalNavigator
 import com.huanchengfly.tieba.post.ui.page.destinations.ForumPageDestination
+import com.huanchengfly.tieba.post.repository.FrsPageRepository
 import com.huanchengfly.tieba.post.ui.page.destinations.ThreadPageDestination
 import com.huanchengfly.tieba.post.ui.page.thread.ThreadPageFrom
 import com.huanchengfly.tieba.post.ui.widgets.compose.Avatar
@@ -136,6 +137,7 @@ fun HistoryListPage(
                             onClick = {
                                 when (it.type) {
                                     HistoryUtil.TYPE_FORUM -> {
+                                        FrsPageRepository.prefetch(it.data)
                                         navigator.navigate(ForumPageDestination(it.data))
                                     }
 
@@ -179,6 +181,7 @@ fun HistoryListPage(
                             onClick = {
                                 when (it.type) {
                                     HistoryUtil.TYPE_FORUM -> {
+                                        FrsPageRepository.prefetch(it.data)
                                         navigator.navigate(ForumPageDestination(it.data))
                                     }
 

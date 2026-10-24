@@ -84,7 +84,8 @@ class ForumViewModel @Inject constructor() :
             )
 
         private fun ForumUiIntent.Load.produceLoadPartialChange() =
-            FrsPageRepository.frsPage(forumName, 1, 1, sortType, null, true)
+            // 复用点击预取（方案 C）已写入的缓存；缓存未命中时退化为正常网络请求
+            FrsPageRepository.frsPage(forumName, 1, 1, sortType, null, false)
                 .map {
                     if (it.data_?.forum != null) ForumPartialChange.Load.Success(
                         it.data_.forum,
