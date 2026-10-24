@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/images/logo.png?v=1.0.9-r4" width="128" alt="FluxTie Logo" />
+  <img src="docs/images/logo.png?v=1.1.0" width="128" alt="FluxTie Logo" />
 </p>
 
 <h1 align="center">FluxTie</h1>
@@ -20,7 +20,7 @@
 > 本项目仅供学习交流，不用于商业用途；它不是百度或贴吧的官方客户端，相关商标与内容权利归其权利人所有。
 
 <p align="center">
-  <img src="docs/images/showcase_hero.png?v=1.0.9-r4" alt="FluxTie 主视觉" />
+  <img src="docs/images/showcase_hero.png?v=1.1.0" alt="FluxTie 主视觉" />
 </p>
 
 ## 项目简介
@@ -35,7 +35,7 @@ FluxTie fork 自 [HuanCheng65/TiebaLite](https://github.com/HuanCheng65/TiebaLit
 ## 核心特性
 
 <p align="center">
-  <img src="docs/images/feature_showcase.png?v=1.0.9-r4" alt="FluxTie 核心特性" />
+  <img src="docs/images/feature_showcase.png?v=1.1.0" alt="FluxTie 核心特性" />
 </p>
 
 - **双阶段流体启动**：系统启动屏与 Compose 启动覆盖层衔接，双水滴、贴字与星石构成完整启动动效。
@@ -52,14 +52,14 @@ FluxTie fork 自 [HuanCheng65/TiebaLite](https://github.com/HuanCheng65/TiebaLit
 
 | 启动屏 | 动态流 | 帖子页 |
 | :---: | :---: | :---: |
-| <img src="docs/images/preview_splash.png?v=1.0.9-r4" width="240" alt="启动屏" /> | <img src="docs/images/preview_explore.png?v=1.0.9-r4" width="240" alt="动态流" /> | <img src="docs/images/preview_thread.png?v=1.0.9-r4" width="240" alt="帖子页" /> |
+| <img src="docs/images/preview_splash.png?v=1.1.0" width="240" alt="启动屏" /> | <img src="docs/images/preview_explore.png?v=1.1.0" width="240" alt="动态流" /> | <img src="docs/images/preview_thread.png?v=1.1.0" width="240" alt="帖子页" /> |
 | **吧页信息流** | **外观设置** | **设置主页** |
-| <img src="docs/images/preview_forum.png?v=1.0.9-r4" width="240" alt="吧页信息流" /> | <img src="docs/images/preview_appearance.png?v=1.0.9-r4" width="240" alt="外观设置" /> | <img src="docs/images/preview_settings.png?v=1.0.9-r4" width="240" alt="设置主页" /> |
+| <img src="docs/images/preview_forum.png?v=1.1.0" width="240" alt="吧页信息流" /> | <img src="docs/images/preview_appearance.png?v=1.1.0" width="240" alt="外观设置" /> | <img src="docs/images/preview_settings.png?v=1.1.0" width="240" alt="设置主页" /> |
 
 </div>
 
 <p align="center">
-  <img src="docs/images/bento_grid_showcase.png?v=1.0.9-r4" alt="FluxTie 设计看板" />
+  <img src="docs/images/bento_grid_showcase.png?v=1.1.0" alt="FluxTie 设计看板" />
 </p>
 
 ## 相对原版的升级
@@ -126,7 +126,7 @@ app/build/outputs/apk/debug/FluxTie-v{version}.apk
 ## Linux.do 致谢
 
 <p align="center">
-  <img src="docs/images/linuxdo_thanks.png?v=1.0.9-r4" alt="感谢 Linux.do 社区" />
+  <img src="docs/images/linuxdo_thanks.png?v=1.1.0" alt="感谢 Linux.do 社区" />
 </p>
 
 FluxTie 的开发与迭代离不开 [Linux.do](https://linux.do/) 社区。感谢分享搞机经验、讨论设计方向、试用开发版并反馈问题的每一位朋友；你们的真诚、友善、团结与专业，让这个项目得以持续完善。
