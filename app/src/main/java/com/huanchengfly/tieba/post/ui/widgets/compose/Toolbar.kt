@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -45,8 +46,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -83,18 +88,19 @@ fun AccountNavIcon(
     val currentAccount = LocalAccount.current
     if (spacer) Spacer(modifier = Modifier.width(12.dp))
     if (currentAccount == null) {
-        Image(
-            painter = rememberDrawablePainter(
-                drawable = ContextCompat.getDrawable(
-                    LocalContext.current,
-                    R.drawable.ic_launcher_new_round
-                )
-            ),
-            contentDescription = null,
+        val loginDesc = stringResource(id = R.string.summary_not_logged_in)
+        Box(
             modifier = Modifier
                 .clip(CircleShape)
                 .size(size)
-        )
+                .clickable {
+                    onClick?.invoke() ?: navigator.navigate(LoginPageDestination)
+                }
+                .semantics { contentDescription = loginDesc },
+            contentAlignment = Alignment.Center
+        ) {
+            AvatarPlaceholder(size = size)
+        }
     } else {
         val context = LocalContext.current
         val menuState = rememberMenuState()

@@ -95,7 +95,6 @@ class App : Application(), SketchFactory {
             setWebViewPath(this)
         }
         AccountUtil.init(this)
-        Config.init(this)
         migrateThemeDefaults()
         val isSelfBuild = applicationMetaData.getBoolean("is_self_build")
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
@@ -103,6 +102,8 @@ class App : Application(), SketchFactory {
         registerActivityLifecycleCallbacks(ClipBoardLinkDetector)
         registerActivityLifecycleCallbacks(OAIDGetter)
         thread {
+            // Config 只被网络层异步读取：UA 探测（WebView 初始化）与 OAID 是冷启动主线程的大头，移入后台
+            Config.init(this@App)
             // 图标组件切换涉及多次 PackageManager IPC，移出主线程避免拖慢冷启动
             AppIconUtil.setIcon()
             runBlocking { BlockManager.init() }
@@ -119,6 +120,9 @@ class App : Application(), SketchFactory {
      * - old_theme 为空或旧默认时写 custom，避免深色切回浅色时回到黑白。
      */
     private fun migrateThemeDefaults() {
+        // 幂等迁移只应生效一次：用 SP 标记短路，避免每次冷启动都在主线程 runBlocking 读写 DataStore
+        val sp = getSharedPreferences("theme_migration", Context.MODE_PRIVATE)
+        if (sp.getBoolean("seed_defaults_v1", false)) return
         runBlocking {
             dataStore.edit { prefs ->
                 val useSeed = prefs[booleanPreferencesKey("use_seed_theme")] ?: false
@@ -138,6 +142,7 @@ class App : Application(), SketchFactory {
                 }
             }
         }
+        sp.edit().putBoolean("seed_defaults_v1", true).apply()
     }
 
     //解决魅族 Flyme 系统夜间模式强制反色

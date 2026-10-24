@@ -373,6 +373,7 @@ class MainActivityV2 : BaseComposeActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         splashScreen.setOnExitAnimationListener { splashScreenViewProvider ->
+            com.huanchengfly.tieba.post.ui.widgets.compose.SplashState.markSystemSplashDismissed()
             splashScreenViewProvider.view.animate()
                 .alpha(0f)
                 .setDuration(100L)
