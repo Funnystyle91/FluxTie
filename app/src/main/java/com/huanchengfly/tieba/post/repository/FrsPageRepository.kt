@@ -12,10 +12,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.security.MessageDigest
 
 object FrsPageRepository {
     var lastHash: String = ""
@@ -42,6 +46,49 @@ object FrsPageRepository {
         }
     }
 
+    /**
+     * 磁盘缓存：把整包 frsPage 响应（Wire 序列化）落盘，使进吧时可秒显上次内容，后台再静默刷新。
+     * 键由 forumName/page/loadType/sortType/goodClassifyId 组成；同一会话内（最新 tab + 头部）共用同一键。
+     */
+    private const val CACHE_DIR_NAME = "frs_page"
+    private const val CACHE_PREFIX = "frs_"
+    private const val CACHE_MAX_FILES = 60
+
+    private fun cacheDir(): File {
+        val dir = File(App.INSTANCE.cacheDir, CACHE_DIR_NAME)
+        if (!dir.exists()) dir.mkdirs()
+        return dir
+    }
+
+    private fun cacheFile(key: String): File {
+        val digest = MessageDigest.getInstance("SHA-256").digest(key.toByteArray())
+        val name = CACHE_PREFIX + digest.joinToString("") { "%02x".format(it) } + ".pb"
+        return File(cacheDir(), name)
+    }
+
+    suspend fun readCache(key: String): FrsPageResponse? = withContext(Dispatchers.IO) {
+        runCatching {
+            val file = cacheFile(key)
+            if (!file.exists() || file.length() == 0L) return@withContext null
+            file.inputStream().use { FrsPageResponse.ADAPTER.decode(it) }
+        }.getOrNull()
+    }
+
+    private fun writeCache(key: String, response: FrsPageResponse) {
+        runCatching {
+            val file = cacheFile(key)
+            file.writeBytes(response.encode().toByteArray())
+            // 简单上限：超过阈值时删除最旧文件，避免无限增长
+            val dir = cacheDir()
+            val files = dir.listFiles { f -> f.name.startsWith(CACHE_PREFIX) } ?: return@runCatching
+            if (files.size > CACHE_MAX_FILES) {
+                files.sortedBy { it.lastModified() }
+                    .take(files.size - CACHE_MAX_FILES)
+                    .forEach { it.delete() }
+            }
+        }
+    }
+
     fun frsPage(
         forumName: String,
         page: Int,
@@ -51,23 +98,44 @@ object FrsPageRepository {
         forceNew: Boolean = false,
     ): Flow<FrsPageResponse> {
         val hash = "${forumName}_${page}_${loadType}_${sortType}_${goodClassifyId}"
-        if (!forceNew && lastResponse != null && lastHash == hash) {
-            return flowOf(lastResponse!!)
+        val cacheKey = "$forumName|$page|$loadType|$sortType|$goodClassifyId"
+        val network: Flow<FrsPageResponse> =
+            TiebaApi.getInstance().frsPage(forumName, page, loadType, sortType, goodClassifyId)
+                .map { response ->
+                    if (response.data_ == null) throw TiebaUnknownException
+                    val userList = response.data_.user_list
+                    val threadList = response.data_.thread_list
+                        .map { threadInfo ->
+                            threadInfo.copy(author = userList.find { it.id == threadInfo.authorId })
+                        }
+                        .filter { !App.INSTANCE.appPreferences.blockVideo || it.videoInfo == null }
+                        .filter { it.ala_info == null } // 去他妈的直播
+                    response.copy(data_ = response.data_.copy(thread_list = threadList))
+                }
+                .onEach {
+                    lastResponse = it
+                    withContext(Dispatchers.IO) { writeCache(cacheKey, it) }
+                }
+        if (!forceNew) {
+            // 先判定内存缓存是否命中（必须在改写 lastHash 之前），内存或磁盘任一命中即秒显旧内容
+            val memoryHit = if (lastResponse != null && lastHash == hash) lastResponse else null
+            lastHash = hash
+            return flow {
+                val cached = memoryHit ?: readCache(cacheKey)
+                if (cached != null) {
+                    emit(cached)
+                    // 后台网络刷新；网络失败（含数据异常）静默保留已显示的缓存内容
+                    try {
+                        emitAll(network)
+                    } catch (_: Throwable) {
+                    }
+                } else {
+                    emitAll(network)
+                }
+            }
         }
         lastHash = hash
-        return TiebaApi.getInstance().frsPage(forumName, page, loadType, sortType, goodClassifyId)
-            .map { response ->
-                if (response.data_ == null) throw TiebaUnknownException
-                val userList = response.data_.user_list
-                val threadList = response.data_.thread_list
-                    .map { threadInfo ->
-                        threadInfo.copy(author = userList.find { it.id == threadInfo.authorId })
-                    }
-                    .filter { !App.INSTANCE.appPreferences.blockVideo || it.videoInfo == null }
-                    .filter { it.ala_info == null } // 去他妈的直播
-                response.copy(data_ = response.data_.copy(thread_list = threadList))
-            }
-            .onEach { lastResponse = it }
+        return network
     }
 
     fun threadList(
