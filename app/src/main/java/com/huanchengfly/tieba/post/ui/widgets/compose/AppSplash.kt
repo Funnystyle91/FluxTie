@@ -109,11 +109,11 @@ private val SplashFontFamily = FontFamily(
 private val FluidBuoyancyEasing = CubicBezierEasing(0.18f, 1.0f, 0.22f, 1.0f)
 
 /**
- * 应用内启动屏（方案 C 一镜到底流体编排终极版）：
- * 1. 物理同源锚定（0~100ms）：Logo 严格处于屏幕物理中心（160dp 满态），零偏差承接系统 SplashScreen 双水滴撞击碰撞终态。
- * 2. 流体浮力升腾（100~800ms）：Logo 伴随流体微摇摆（-2.2° -> +0.8° -> 0°）平滑升腾至 -142dp，等比收敛至 83dp 头部徽标。
- * 3. 品牌字间距舒展与徽章液态拉伸展开（320~860ms）：FluxTie 英文自 1.sp 优雅扩展至 3.5.sp；“为兴趣而生”专属流光徽章从中心水滴向两侧液态延展，留下 78dp 黄金留白。
- * 4. 极致退场：首页数据就绪后轻柔升腾淡出，底栏与帖子流迎面涌出。
+ * 应用内启动屏（方案 C 一镜到底流体编排，速度优先，已大幅压缩）：
+ * 1. 物理同源锚定（0~30ms）：Logo 严格处于屏幕物理中心（160dp 满态），零偏差承接系统 SplashScreen 双水滴撞击碰撞终态。
+ * 2. 流体浮力升腾（30~280ms）：Logo 伴随流体微摇摆（-2.2° -> +0.8° -> 0°）平滑升腾至 -142dp，等比收敛至 83dp 头部徽标。
+ * 3. 品牌字间距舒展与徽章液态拉伸展开（90~460ms）：FluxTie 英文自 1.sp 优雅扩展至 3.5.sp；“为兴趣而生”专属流光徽章从中心水滴向两侧液态延展，留下 78dp 黄金留白。
+ * 4. 极致退场：首页数据就绪且满足最短展示（600ms）后整体淡出；1.8s 超时兜底。
  */
 @Composable
 fun AppSplashOverlay() {
@@ -123,12 +123,12 @@ fun AppSplashOverlay() {
     // 1. 一镜到底核心动效：Logo 伴随流体浮力曲线升腾（-142dp）并等比收敛至 83dp
     val logoTranslateY by animateDpAsState(
         targetValue = if (isHeaderStage) (-142).dp else 0.dp,
-        animationSpec = tween(durationMillis = 680, easing = FluidBuoyancyEasing),
+        animationSpec = tween(durationMillis = 250, easing = FluidBuoyancyEasing),
         label = "logoTranslateY"
     )
     val logoScale by animateFloatAsState(
         targetValue = if (isHeaderStage) 0.52f else 1.0f,
-        animationSpec = tween(durationMillis = 680, easing = FluidBuoyancyEasing),
+        animationSpec = tween(durationMillis = 250, easing = FluidBuoyancyEasing),
         label = "logoScale"
     )
 
@@ -136,11 +136,11 @@ fun AppSplashOverlay() {
     val logoRotation by animateFloatAsState(
         targetValue = if (isHeaderStage) 0.0f else 0.0f,
         animationSpec = keyframes {
-            durationMillis = 680
+            durationMillis = 250
             0.0f at 0
-            -2.4f at 220 with FluidBuoyancyEasing
-            0.8f at 480 with FluidBuoyancyEasing
-            0.0f at 680
+            -2.4f at 80 with FluidBuoyancyEasing
+            0.8f at 180 with FluidBuoyancyEasing
+            0.0f at 250
         },
         label = "logoRotation"
     )
@@ -148,66 +148,66 @@ fun AppSplashOverlay() {
     // 2. 品牌大标 FluxTie 字间距优雅延展 (从凝聚 1.sp 展开到大气舒展的 3.5.sp)
     val brandLetterSpacing by animateFloatAsState(
         targetValue = if (isHeaderStage) 3.5f else 1.0f,
-        animationSpec = tween(durationMillis = 560, delayMillis = 200, easing = FluidBuoyancyEasing),
+        animationSpec = tween(durationMillis = 240, delayMillis = 60, easing = FluidBuoyancyEasing),
         label = "brandLetterSpacing"
     )
     val brandScale by animateFloatAsState(
         targetValue = if (isHeaderStage) 1.0f else 0.88f,
-        animationSpec = tween(durationMillis = 560, delayMillis = 200, easing = FluidBuoyancyEasing),
+        animationSpec = tween(durationMillis = 240, delayMillis = 60, easing = FluidBuoyancyEasing),
         label = "brandScale"
     )
 
     // 3. 专属流光徽章液态延展与文字浮现
     val contentRevealAlpha by animateFloatAsState(
         targetValue = if (isHeaderStage) 1.0f else 0.0f,
-        animationSpec = tween(durationMillis = 440, delayMillis = 240, easing = FluidBuoyancyEasing),
+        animationSpec = tween(durationMillis = 180, delayMillis = 70, easing = FluidBuoyancyEasing),
         label = "contentRevealAlpha"
     )
     val contentRevealSlide by animateDpAsState(
         targetValue = if (isHeaderStage) 0.dp else 24.dp,
-        animationSpec = tween(durationMillis = 520, delayMillis = 220, easing = FluidBuoyancyEasing),
+        animationSpec = tween(durationMillis = 200, delayMillis = 60, easing = FluidBuoyancyEasing),
         label = "contentRevealSlide"
     )
     val badgeExpansion by animateFloatAsState(
         targetValue = if (isHeaderStage) 1.0f else 0.0f,
-        animationSpec = tween(durationMillis = 500, delayMillis = 280, easing = FluidBuoyancyEasing),
+        animationSpec = tween(durationMillis = 180, delayMillis = 80, easing = FluidBuoyancyEasing),
         label = "badgeExpansion"
     )
 
     // 4. 整体退场过渡（开门交接）
     val transition = updateTransition(targetState = visible, label = "splashExit")
     val bgAlpha by transition.animateFloat(
-        transitionSpec = { tween(durationMillis = 300, easing = LinearEasing) },
+        transitionSpec = { tween(durationMillis = 120, easing = LinearEasing) },
         label = "splashBgAlpha"
     ) { if (it) 1f else 0f }
     val exitAlpha by transition.animateFloat(
-        transitionSpec = { tween(durationMillis = 220, easing = EaseInCubic) },
+        transitionSpec = { tween(durationMillis = 100, easing = EaseInCubic) },
         label = "splashExitAlpha"
     ) { if (it) 1f else 0f }
     val exitScale by transition.animateFloat(
-        transitionSpec = { tween(durationMillis = 260, easing = FastOutSlowInEasing) },
+        transitionSpec = { tween(durationMillis = 130, easing = FastOutSlowInEasing) },
         label = "splashExitScale"
     ) { if (it) 1f else 0.96f }
     val exitTranslateY by transition.animateDp(
-        transitionSpec = { tween(durationMillis = 260, easing = FastOutSlowInEasing) },
+        transitionSpec = { tween(durationMillis = 130, easing = FastOutSlowInEasing) },
         label = "splashExitTranslateY"
     ) { if (it) 0.dp else (-18).dp }
 
     LaunchedEffect(Unit) {
         SplashState.reset()
-        // 1. 等待系统 SplashScreen 开始揭开交接（设置 3000ms 兜底避免极端无信号卡死）
+        // 1. 等待系统 SplashScreen 开始揭开交接（设置 2000ms 兜底避免极端无信号卡死）
         val waitStart = System.currentTimeMillis()
-        while (!SplashState.systemSplashDismissed.value && (System.currentTimeMillis() - waitStart) < 3000L) {
+        while (!SplashState.systemSplashDismissed.value && (System.currentTimeMillis() - waitStart) < 2000L) {
             delay(40)
         }
-        // 系统揭开透明遮罩后，在中心短暂稳定停留 100ms 确保视觉零顿挫，随后启动一镜到底升腾
-        delay(100)
+        // 系统揭开透明遮罩后，在中心短暂稳定停留 80ms 确保视觉零顿挫，随后启动一镜到底升腾
+        delay(80)
         isHeaderStage = true
         val animStart = System.currentTimeMillis()
 
-        // 循环播放直到：加载完成且达到最短展示时长（1400ms 保证一镜到底完整呈现）；3.5s 超时兜底
-        val minDuration = 1400L
-        val timeout = 3500L
+        // 循环播放直到：加载完成且达到最短展示时长（600ms 保证一镜到底完整呈现）；1.8s 超时兜底
+        val minDuration = 600L
+        val timeout = 1800L
         while (true) {
             val elapsed = System.currentTimeMillis() - animStart
             if ((SplashState.ready.value && elapsed >= minDuration) || elapsed >= timeout) break

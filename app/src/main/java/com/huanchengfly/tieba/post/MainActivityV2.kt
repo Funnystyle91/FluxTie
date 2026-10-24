@@ -693,10 +693,10 @@ class MainActivityV2 : BaseComposeActivity() {
 }
 
 private object TiebaNavHostDefaults {
-    // M3 Shared Axis X:短位移 + 淡化,固定时长,弃用全宽低刚度弹簧
-    private val SlideSpec = tween<IntOffset>(300, easing = FastOutSlowInEasing)
-    private val FadeInSpec = tween<Float>(240, delayMillis = 60, easing = LinearOutSlowInEasing)
-    private val FadeOutSpec = tween<Float>(120, easing = FastOutLinearInEasing)
+    // M3 Shared Axis X:短位移 + 淡化,固定时长,速度优先已压缩
+    private val SlideSpec = tween<IntOffset>(180, easing = FastOutSlowInEasing)
+    private val FadeInSpec = tween<Float>(150, delayMillis = 30, easing = LinearOutSlowInEasing)
+    private val FadeOutSpec = tween<Float>(90, easing = FastOutLinearInEasing)
 
     @Composable
     @OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
